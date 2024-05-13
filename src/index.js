@@ -1,6 +1,6 @@
 require('dotenv/config');
 const mongoose = require('mongoose');
-//const API = require("./API.js");
+const API = require("./API.js");
 const path = require('node:path');
 const fs = require('node:fs');
 
@@ -37,18 +37,24 @@ for (const folder of commandFolders) {
 	}
 }
 
-const eventsPath = path.join(__dirname, 'events');
-const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
-
-for (const file of eventFiles) {
-	const filePath = path.join(eventsPath, file);
-	const event = require(filePath);
-	if (event.once) {
-		client.once(event.name, (...args) => event.execute(...args));
-	} else {
-		client.on(event.name, (...args) => event.execute(...args));
-	}
-}
+const loadEvents = (dir = path.join(__dirname, 'events')) => {
+	fs.readdirSync(dir).forEach(file => {
+			const filePath = path.join(dir, file);
+			const stat = fs.lstatSync(filePath);
+			if (stat.isDirectory()) {
+					// If file is a directory, recursive call recurDir
+					loadEvents(filePath);
+			} else if (file.endsWith('.js')) {
+					const event = require(filePath);
+					if (event.once) {
+							client.once(event.name, (...args) => event.execute(...args));
+					} else {
+							client.on(event.name, (...args) => event.execute(...args));
+					}
+			}
+	});
+};
+loadEvents();
 
 (async () => {
   try {
