@@ -19,6 +19,7 @@ module.exports = {
       let promises = parsedMessage.map((msg) => {
         let regex = /\/invite\/.*tag=([^&]*)/;
         let match = msg.match(regex);
+        console.log("tesT");
         if (match){
           console.log(match[1] + " is the match");
           getClanName()
