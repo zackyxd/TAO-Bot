@@ -11,23 +11,24 @@ module.exports = {
     const channel = await guild.channels.cache.get(message.channelId);
     // HAS ROLES
     if (message.member.roles.cache.size !== 1){
-      channel.send({ content: 'User has extra roles!' });
+      return;
     }
 
     // NO ROLES = NEW TICKET
     else{
       let parsedMessage = (message.content).split(/\s+/);
-      console.log(parsedMessage);
       let foundAccount = false;
       var account;
 
       let promises = parsedMessage.map(async (msg) => {
         if (msg.length > 13){
           let regex = /https:\/\/royaleapi\.com\/player\/(\w+)/;
-          let match = msg.match(regex); 
-          if (match) {
-            account = await playertag(match[1]);
+          let match = msg.match(regex);
+          account = await playertag(match[1]);
+          if (match && !foundAccount) {
             foundAccount = true;
+            account = await playertag(match[1]);
+            return true;
           }
         }
         else if (msg.length >= 3 && msg.length <= 12) {
@@ -35,7 +36,6 @@ module.exports = {
           if (account && !foundAccount) {
             foundAccount = true;
             account = await playertag(msg);
-            channel.send({ content: `User has no roles :x: Their account name is ${account.name}`});
             return true;
           }
         }
@@ -43,10 +43,8 @@ module.exports = {
       });
       await Promise.all(promises);
       if (!foundAccount) {
-        console.log("No valid accounts in this message");
         return;
       }
-
       let playerMessage = await playerStats(account);
       channel.send({ embeds: [playerMessage.embedReturn], files: [playerMessage.fileReturn] });
     }
