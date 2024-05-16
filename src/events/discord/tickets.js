@@ -49,6 +49,10 @@ module.exports = {
         return;
       }
       let playerMessage = await playerStats(account);
+      console.log(playerMessage + " is what it going to send");
+      if (playerMessage === null || playerMessage === undefined){
+        return;
+      }
       channel.send({ embeds: [playerMessage.embedReturn], files: [playerMessage.fileReturn] });
     }
   }
@@ -61,7 +65,9 @@ async function playertag(playertag) {
     playertag
   )}`;
   const playerData = await API.fetchData(playerURL, "PlayerData", true);
-
+  if (playerData === 404 || playerData === 503){
+    return null;
+  }
   // let errorCode = API.checkStatus(null, playerData, playertag);
   // //console.log(errorCode);
   // if (!errorCode.status) {
@@ -76,6 +82,7 @@ async function playertag(playertag) {
 
 
 async function playerStats(account){
+  if (account === null) return null;
   let name = account.name;
   let playertag = (account.tag).substring(1);
   let level = account.expLevel;

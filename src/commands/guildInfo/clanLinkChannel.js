@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 
@@ -9,13 +9,37 @@ module.exports = {
   .addChannelOption(option =>
     option.setName("link-channel")
     .setDescription("Pick a channel that will be used for clan links")
-    .setRequired(true)),
+    .setRequired(true))
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
   
   async execute(interaction){
-    const guild = interaction.guild;
-    const linkChannel = interaction.options.getChannel("link-channel");
-    const data = {
-      guildId: guild.id,
+    if (!interaction.isChatInputCommand()) return;
+    
+    if (interaction.commandName === "set-link-channel") {
+      await interaction.deferReply({ephemeral: true});
+      const guild = interaction.guild;
+      const linkChannel = interaction.options.getChannel("link-channel");
+      
+      console.log(linkChannel);
+      if (linkChannel.type !== 0){
+        interaction.editReply("Please make sure the channel is a text channel.");
+        return;
+      }
+
+      const filePath = path.join(__dirname, '..', '..', '..', 'guildInfo', `${guild.id}.json`);
+
+      let data = {};
+      try {
+        data = JSON.parse(fs.readFileSync(filePath));
+      }
+      catch (err){
+        console.error(err);
+      }
+
+      data.linkChannel = linkChannel.id;
+      fs.writeFileSync(filePath, JSON.stringify(data));
+
+      await interaction.editReply(`The link channel has been set to <#${linkChannel.id}>`);
     }
   }
 }

@@ -11,8 +11,18 @@ module.exports = {
     const guild = message.guild;
     const channel = await guild.channels.cache.get(message.channelId);
 
+    const filePath = path.join(__dirname, '..', '..', '..', 'guildInfo', `${guild.id}.json`);
+    let data = [];
+    try {
+      data = JSON.parse(fs.readFileSync(filePath));
+    }
+    catch (err){
+      console.error(err);
+    }
     // if channel not #test-bot
-    if (!channel === '1183749954787889172'){
+    console.log(data.linkChannel);
+    if (channel.id !== data.linkChannel){
+      console.log("not link channel");
       return;
     }
     else{
@@ -53,25 +63,19 @@ module.exports = {
       const messageId = sentMessage.id;
 
 
-      let data = [];
-      try {
-        data = JSON.parse(fs.readFileSync('expiryData.json'));
-      }
-      catch (err){
-        console.error(err);
-      }
+      
 
       // Check if the clan is already in the array
-      const index = data.findIndex(item => item.clanName === clan.name);
+      const index = data.clans.findIndex(item => item.clanName === clan.name);
 
       if (index !== -1) {
         // If the clan is already in the array, update the existing object
-        data[index].expiryTime = expiryTime;
-        data[index].channelId = message.channelId;
-        data[index].messageId = messageId; // store message ID
+        data.clans[index].expiryTime = expiryTime;
+        data.clans[index].channelId = message.channelId;
+        data.clans[index].messageId = messageId; // store message ID
       } else {
         // If the clan is not in the array, add a new object
-        data.push({
+        data.clans.push({
           clanName: clan.name,
           expiryTime: expiryTime,
           channelId: message.channelId,
@@ -79,7 +83,7 @@ module.exports = {
         });
       }
       // Store the updated array in the file
-      fs.writeFileSync('expiryData.json', JSON.stringify(data));
+      fs.writeFileSync(filePath, JSON.stringify(data));
     }
     
   }

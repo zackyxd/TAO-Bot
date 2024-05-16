@@ -14,7 +14,7 @@ async function fetchData(url, filename, print) {
         Authorization: `Bearer ${key}`,
       },
     });
-
+    console.log(response.status);
     if (response.status !== 200) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -36,8 +36,17 @@ async function fetchData(url, filename, print) {
     return data;
 
   } catch (error) {
-    //console.log(`Fetch failed: ${error}`);
-    return null;
+    console.log(`Fetch failed: ${error}`);
+    if (error.response && error.response.status) {
+        const statusCode = error.response.status;
+        if (statusCode === 404){
+          return 404;
+        }
+        else if (statusCode === 503){
+          return 503;
+        }
+    }
+    return;
   }
 }
 
