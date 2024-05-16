@@ -5,11 +5,11 @@ const fs = require('fs');
 
 module.exports = {
   name: Events.MessageCreate,
-  async execute(message) {
-    if (message.author.bot) return;
+  async execute(originalMessage) {
+    if (originalMessage.author.bot) return;
 
-    const guild = message.guild;
-    const channel = await guild.channels.cache.get(message.channelId);
+    const guild = originalMessage.guild;
+    const channel = await guild.channels.cache.get(originalMessage.channelId);
 
     const filePath = path.join(__dirname, '..', '..', '..', 'guildInfo', `${guild.id}.json`);
     let data = [];
@@ -20,13 +20,12 @@ module.exports = {
       console.error(err);
     }
     // if channel not #test-bot
-    console.log(data.linkChannel);
     if (channel.id !== data.linkChannel){
       console.log("not link channel");
       return;
     }
     else{
-      let parsedMessage = (message.content).split(/\s+/);
+      let parsedMessage = (originalMessage.content).split(/\s+/);
       console.log(parsedMessage);
       var clan;
       var clanLink;
@@ -34,19 +33,21 @@ module.exports = {
 
       let promises = parsedMessage.map(async (msg) => {
         let regex = /\/invite\/.*tag=([^&]*)/;
+        let regexLink = /https:\/\/link\.clashroyale\.com\/invite\/clan\/en\?tag=[^&]*&token=[^&]*&platform=(android|iOS)/;
         let match = msg.match(regex);
+        let apiLink = msg.match(regexLink);
         if (match === null || match[1] === undefined){
           return;
         }
         clan = await getClanName(match[1]);
         if (match && !foundClan){
-          message.delete().then(msg => console.log("Deleted message")).catch(console.error);
-          foundClan = true;
-          clan = await getClanName(match[1]);
-          clanLink = msg;
-          return true;
+          originalMessage.delete().then(msg => console.log("Deleted message")).catch(console.error); // delete the real user's message with the link
+          foundClan = true; // make the clan found
+          clan = await getClanName(match[1]); // get clan info
+          clanLink = apiLink[0]; // the clan link is the msg that was parsed 
+          return true; // found link
         }
-        return false;
+        return false; // no link found
       });
 
       await Promise.all(promises);
@@ -59,8 +60,8 @@ module.exports = {
       const threeDaysInSeconds = 5; // Number of seconds in 3 days
       const expiryTime = currentTime + threeDaysInSeconds; // Expiry time 3 days from now
 
-      const sentMessage = await channel.send({ content: `[${clan.name}](<${clanLink}>): Expire <t:${expiryTime}:R>`});
-      const messageId = sentMessage.id;
+      const sentMessage = await channel.send({ content: `[${clan.name}](<${clanLink}>): Expire <t:${expiryTime}:R>`}); // bot's message with countdown
+      const messageId = sentMessage.id; // countdown message id
 
 
       
@@ -69,16 +70,32 @@ module.exports = {
       const index = data.clans.findIndex(item => item.clanName === clan.name);
 
       if (index !== -1) {
+        if ('oldBotMessageId' in data.clans[index]) {
+          const oldBotChannel = await client.channels.fetch(data.clans[index].oldBotChannelId);
+          const oldBotMessage = await oldBotChannel.messages.fetch(data.clans[index].oldBotMessageId);
+          oldBotMessage.delete();
+          delete data.clans[index].oldBotMessageId;
+          delete data.clans[index].oldBotChannelId;
+        }
         // If the clan is already in the array, update the existing object
-        data.clans[index].expiryTime = expiryTime;
-        data.clans[index].channelId = message.channelId;
-        data.clans[index].messageId = messageId; // store message ID
+        if (data.clans[index].expiryTime <= expiryTime){ // new link posted
+          data.clans[index].expiryTime = expiryTime;
+          let deleteOriginalCoutndown = await channel.messages.fetch(data.clans[index].messageId);
+          deleteOriginalCoutndown.delete();
+          data.clans[index].messageId = messageId;
+        }
+        else{
+          data.clans[index].expiryTime = expiryTime;
+          data.clans[index].channelId = originalMessage.channelId;
+          data.clans[index].messageId = messageId; // store message ID
+        }
+
       } else {
         // If the clan is not in the array, add a new object
         data.clans.push({
           clanName: clan.name,
           expiryTime: expiryTime,
-          channelId: message.channelId,
+          channelId: originalMessage.channelId,
           messageId: messageId
         });
       }

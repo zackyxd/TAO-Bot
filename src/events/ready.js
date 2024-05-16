@@ -12,7 +12,7 @@ module.exports = {
       type: ActivityType.Watching
     });
 
-		setInterval(checkExpiry, 3000);
+		setInterval(checkExpiry, 5000);
 	},
 };
 
@@ -35,32 +35,31 @@ async function checkExpiry() {
 			// If the current clan object has an expiryTime property
 			if ('expiryTime' in data.clans[i]) {
 				// If 3 days have passed, delete the old message and send a new one
+				let oldBotMessage;
+				let oldBotMessageId;
+				let oldBotChannelId;
 				if (currentTime >= data.clans[i].expiryTime) {
-					let oldBotMessage;
-					let oldBotMessageId;
 					const channel = await client.channels.fetch(data.clans[i].channelId);
 					const oldMessage = await channel.messages.fetch(data.clans[i].messageId);
 					oldMessage.delete(); // Delete the old message
 					if (data.clans[i].roleId !== undefined){
 						oldBotMessage = await channel.send(`<@&${data.clans[i].roleId}>, 3 days have passed!`); // Replace 'role' with the actual role you want to ping
 						oldBotMessageId = oldBotMessage.id;
+						oldBotChannelId = oldBotMessage.channelId;
 					}
 					else{
-						await channel.send(`It's been 3 days, the link for ${data.clans[i].clanName} has passed!`); // Replace 'role' with the actual role you want to ping
+						oldBotMessage = await channel.send(`The link for ${data.clans[i].clanName} has expired!`); // Replace 'role' with the actual role you want to ping
+						oldBotMessageId = oldBotMessage.id;
+						oldBotChannelId = oldBotMessage.channelId;
 					}
 					data.clans[i].oldBotMessageId = oldBotMessageId;
+					data.clans[i].oldBotChannelId = oldBotChannelId;
 					// Remove the clan object from the array
 					//data.clans.splice(i, 1);
 					delete data.clans[i].expiryTime;
 					delete data.clans[i].messageId;
 					delete data.clans[i].channelId;
 					i--; // Decrement i as the array length has decreased
-				}
-				else{
-					const channel = await client.channels.fetch(data.clans[i].channelId);
-					const oldBotMessage = await channel.messages.fetch(data.clans[i].oldBotMessageId);
-					oldBotMessage.delete();
-					delete data.clans[i].oldBotMessageId;
 				}
 			}
 		}
