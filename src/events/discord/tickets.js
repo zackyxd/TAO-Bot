@@ -24,6 +24,9 @@ module.exports = {
         if (msg.length > 13){
           let regex = /https:\/\/royaleapi\.com\/player\/(\w+)/;
           let match = msg.match(regex);
+          if (match === null || match[1] === undefined){
+            return;
+          }
           account = await playertag(match[1]);
           if (match && !foundAccount) {
             foundAccount = true;
