@@ -13,7 +13,7 @@ global.client = new Client({
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
         GatewayIntentBits.Guilds,
-				GatewayIntentBits.GuildMessageReactions
+				GatewayIntentBits.GuildMessageReactions,
     ],
 });
 

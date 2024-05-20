@@ -21,7 +21,6 @@ module.exports = {
     }
     // if channel not #test-bot
     if (channel.id !== data.linkChannel){
-      console.log("not link channel");
       return;
     }
     else{

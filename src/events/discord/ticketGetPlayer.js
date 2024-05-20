@@ -1,4 +1,4 @@
-const { Events, EmbedBuilder, AttachmentBuilder } = require('discord.js');
+const { Events, EmbedBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
 const API = require("../../API.js");
 const Emoji = require('../../models/EmojiModel.js');
 
@@ -49,14 +49,29 @@ module.exports = {
         return;
       }
       let playerMessage = await playerStats(account);
-      console.log(playerMessage + " is what it going to send");
       if (playerMessage === null || playerMessage === undefined){
         return;
       }
-      channel.send({ embeds: [playerMessage.embedReturn], files: [playerMessage.fileReturn] });
+
+      const confirm = new ButtonBuilder()
+      .setCustomId(`confirm@_@${message.author.id}@_@${playerMessage.name}@_@#${playerMessage.playertag}`)
+      .setLabel("Confirm Account")
+      .setStyle(ButtonStyle.Primary);
+
+      // const cancel = new ButtonBuilder()
+      // .setCustomId('cancel')
+      // .setLabel("Cancel")
+      // .setStyle(ButtonStyle.Secondary);
+
+      const row = new ActionRowBuilder()
+      .addComponents(confirm);
+
+      currentMessage = await channel.send({ embeds: [playerMessage.embedReturn], files: [playerMessage.fileReturn], components: [row] });
+
     }
   }
 }
+
 
 
 async function playertag(playertag) {
@@ -64,7 +79,7 @@ async function playertag(playertag) {
   const playerURL = `https://proxy.royaleapi.dev/v1/players/${encodeURIComponent(
     playertag
   )}`;
-  const playerData = await API.fetchData(playerURL, "PlayerData", true);
+  const playerData = await API.fetchData(playerURL, "PlayerData", false);
   if (playerData === 404 || playerData === 503){
     return null;
   }
@@ -124,18 +139,18 @@ async function playerStats(account){
 
   let badgeId = account?.clan?.badgeId ?? '0_';
 
-  currentPOL = account.currentPathOfLegendSeasonResult.leagueNumber;
+  currentPOL = account?.currentPathOfLegendSeasonResult?.leagueNumber ?? 1;
   if (currentPOL === 10){
     currentPOLTrophies = account.currentPathOfLegendSeasonResult.trophies;
   }
 
-  lastPOL = account.lastPathOfLegendSeasonResult.leagueNumber;
+  lastPOL = account?.lastPathOfLegendSeasonResult?.leagueNumber ?? 1;
   if (lastPOL === 10){
     lastPOLTrophies = account.lastPathOfLegendSeasonResult.trophies;
     lastPOLRank = account.lastPathOfLegendSeasonResult.rank;
   }
 
-  bestPOL = account.bestPathOfLegendSeasonResult.leagueNumber;
+  bestPOL = account?.bestPathOfLegendSeasonResult?.leagueNumber ?? 1;
   if (bestPOL === 10){
     bestPOLTrophies = account.bestPathOfLegendSeasonResult.trophies;
     bestPOLRank = account.bestPathOfLegendSeasonResult.rank;
@@ -214,7 +229,7 @@ async function playerStats(account){
       .setDescription(description);
       
       //interaction.editReply({ embeds: [embedReturn], files: [file] });
-      return {embedReturn, fileReturn};
+      return {embedReturn, fileReturn, name, playertag};
   
 }
 

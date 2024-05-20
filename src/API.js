@@ -14,7 +14,7 @@ async function fetchData(url, filename, print) {
         Authorization: `Bearer ${key}`,
       },
     });
-    console.log(response.status);
+    // console.log(response.status);
     if (response.status !== 200) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
