@@ -61,12 +61,17 @@ client.on('guildCreate', guild => {
 	// This event will run whenever the bot joins a guild.
 	let data = {
 			guildId: guild.id,
-			clans: []
+			clans: {},
+			linkChannel: '',
+			staffRole: '',
+			playersTag: {},
+			playersId: {},
 	};
 	// We can save the settings for this guild to the disk. This is great for things like per-guild prefixes and role names.
 	// We can use the JSON stringify function to make the data readable and then write to the file.
 	fs.writeFileSync(`./guildInfo/${guild.id}.json`, JSON.stringify(data, null, 2));
 });
+
 
 (async () => {
   try {

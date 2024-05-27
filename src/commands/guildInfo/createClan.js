@@ -45,20 +45,17 @@ module.exports = {
       return;
     }
 
-    const index = data.clans.findIndex(item => item.clanName === clan.name)
-    if (index !== -1){
-      data.clans[index].clanName = clan.name,
-      data.clans[index].abbreviation = abbrev,
-      data.clans[index].clantag = clan.tag,
-      data.clans[index].roleId = roleId;
-    }
-    else{
-      data.clans.push({
-        clanName: clan.name,
-        abbreviation: abbrev,
-        clantag: clan.tag,
-        roleId: roleId,
-      })
+    // Use the clan's tag or abbreviation as the key in the dictionary
+    if (!data.clans[clan.name]) {
+      data.clans[clan.name] = {
+          abbreviation: abbrev,
+          clantag: clan.tag,
+          roleId: roleId,
+      };
+    } else {
+        data.clans[clan.name].abbreviation = abbrev;
+        data.clans[clan.name].clantag = clan.tag;
+        data.clans[clan.name].roleId = roleId;
     }
     
     fs.writeFileSync(filePath, JSON.stringify(data));
@@ -77,7 +74,6 @@ async function checkClan(interaction, clantag) {
     clantag
   )}`;
   const clanData = await API.fetchData(clanURL, "ClanData", true);
-  console.log(clanData);
   if (clanData === 404){
     let filename = 0;
     const attachment = new AttachmentBuilder(`badges/${filename}.png`);

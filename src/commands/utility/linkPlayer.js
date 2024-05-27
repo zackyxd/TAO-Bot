@@ -1,8 +1,10 @@
 const API = require("../../API.js");
-const { SlashCommandBuilder, PermissionFlagsBits, AttachmentBuilder, EmbedBuilder } = require("discord.js");
+const { SlashCommandBuilder, PermissionFlagsBits, AttachmentBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require("discord.js");
 //const Abbrev = require("../../models/02ClanAbbreviations.js");
 //const User = require("../../models/02UserModel.js");
 const Emoji = require('../../models/EmojiModel.js');
+const path = require('path');
+const fs = require('fs');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -20,32 +22,94 @@ module.exports = {
     .setDefaultMemberPermissions(PermissionFlagsBits.MuteMembers),
   
     async execute(interaction){
-      await interaction.deferReply({ephemeral: true});
+      await interaction.deferReply();
       var member = interaction.options.getMember("user"); // gets full user
       var playertag = interaction.options.get("playertag").value.toUpperCase();
       if (playertag.charAt(0) !== "#") {
         playertag = "#" + playertag;
       }
 
-      const guild = interaction.guild;
-      let linkedPlayer = await getPlayertag(playertag);
-      if (!linkedPlayer.name) {
-        interaction.editReply({
-          embeds: [linkedPlayer.embedReturn],
-          files: [linkedPlayer.fileReturn],
-        });
+      let account = await getPlayertag(interaction, playertag);
+      if (account === null) return;
+
+      let playerMessage = await playerStats(account, interaction, member);
+      if (playerMessage === null || playerMessage === undefined){
         return;
       }
+      
+      const filePath = path.join(__dirname, '..', '..', '..', 'guildInfo', `${interaction.guild.id}.json`);
+      let data = {};
+      try {
+        data = JSON.parse(fs.readFileSync(filePath));
+      }
+      catch (err){
+        console.error(err);
+      }
+      let oldUserId = data.players[playertag] ? data.players[playertag].userId : '';
+      if (data.players[playertag] && oldUserId !== member.id){
+        const confirm = new ButtonBuilder()
+          .setCustomId(`change@_@${member.user.id}@_@${playerMessage.name}@_@#${playerMessage.playertag}@_@${interaction.user.id}`)
+          .setLabel("Change Link?")
+          .setStyle(ButtonStyle.Primary);
+
+        const cancel = new ButtonBuilder()
+          .setCustomId('cancel')
+          .setLabel('Cancel')
+          .setStyle(ButtonStyle.Secondary);
+
+        const row = new ActionRowBuilder()
+          .addComponents(cancel, confirm);
+
+        await interaction.editReply({ embeds: [playerMessage.embedReturnNoLink], files: [playerMessage.fileReturn], components: [row] });
+
+        interaction.followUp({ content: `This playertag is already linked to <@${oldUserId}>, would you like to switch this to <@${member.id}>?`, ephemeral: true })
+      }
+      // Write new player
+      else if (!data.players[playertag]){
+        data.players[playertag] = { userId: member.user.id };
+        try {
+          await member.setNickname(account.name);
+          await interaction.editReply({ embeds: [playerMessage.embedReturn], files: [playerMessage.fileReturn] });
+          
+        } catch (error) {
+          await interaction.editReply({ embeds: [playerMessage.embedReturnNoLink], files: [playerMessage.fileReturn] });
+          await interaction.followUp({ content: "There was an error changing their name, permission issue likely.", ephemeral: true })
+        }
+      }
+      else{
+        await interaction.editReply({ embeds: [playerMessage.embedReturnNoLink], files: [playerMessage.fileReturn] });
+        interaction.followUp({ content: `This playertag is already linked to <@${oldUserId}>, no change made.`, ephemeral: true })
+      }
+
+      fs.writeFileSync(filePath, JSON.stringify(data));
+      
+
     }
 }
 
-async function getPlayertag(playertag) {
+async function getPlayertag(interaction, playertag) {
   if (playertag.charAt(0) !== '#') playertag = '#' + playertag;
   const playerURL = `https://proxy.royaleapi.dev/v1/players/${encodeURIComponent(
     playertag
   )}`;
   const playerData = await API.fetchData(playerURL, "PlayerData", true);
-  if (playerData === 404 || playerData === 503){
+  if (playerData === 404){
+    let filename = 0;
+    //const attachment = new AttachmentBuilder(`badges/${filename}.png`);
+    const embed = new EmbedBuilder()
+    //.setTitle("Error")
+    .setDescription(`Player \`${playertag}\` not found.`)
+    .setColor('Red')
+    //.setThumbnail(`attachment://${filename}.png`)
+    interaction.editReply({ embeds: [embed] });
+    return null;
+  }
+  if (playerData === 503){
+    const embed = new EmbedBuilder()
+    //.setTitle("Error")
+    .setDescription(`Clash Royale is currently on maintainence break. Please try again later.`)
+    .setColor('Red')
+    interaction.editReply({ embeds: [embed] });
     return null;
   }
   // let errorCode = API.checkStatus(null, playerData, playertag);
@@ -60,7 +124,7 @@ async function getPlayertag(playertag) {
   return playerData;
 }
 
-async function playerStats(account){
+async function playerStats(account, interaction, member){
   if (account === null) return null;
   let name = account.name;
   let playertag = (account.tag).substring(1);
@@ -103,18 +167,18 @@ async function playerStats(account){
 
   let badgeId = account?.clan?.badgeId ?? '0_';
 
-  currentPOL = account.currentPathOfLegendSeasonResult.leagueNumber;
+  currentPOL = account?.currentPathOfLegendSeasonResult?.leagueNumber ?? 1;
   if (currentPOL === 10){
     currentPOLTrophies = account.currentPathOfLegendSeasonResult.trophies;
   }
 
-  lastPOL = account.lastPathOfLegendSeasonResult.leagueNumber;
+  lastPOL = account?.lastPathOfLegendSeasonResult?.leagueNumber ?? 1;
   if (lastPOL === 10){
     lastPOLTrophies = account.lastPathOfLegendSeasonResult.trophies;
     lastPOLRank = account.lastPathOfLegendSeasonResult.rank;
   }
 
-  bestPOL = account.bestPathOfLegendSeasonResult.leagueNumber;
+  bestPOL = account?.bestPathOfLegendSeasonResult?.leagueNumber ?? 1;
   if (bestPOL === 10){
     bestPOLTrophies = account.bestPathOfLegendSeasonResult.trophies;
     bestPOLRank = account.bestPathOfLegendSeasonResult.rank;
@@ -179,8 +243,24 @@ async function playerStats(account){
 
   description += `__**Card Levels**__ <:cards:1196602848411127818>\n<:experience15:1196504104256671794>: ${level15}\n<:experience14:1196504101756874764>: ${level14}\n<:experience13:1196504100200796160>: ${level13}\n<:experience12:1196504097449312336>: ${level12}`;
 
+  let linker = interaction.member.nickname ?? interaction.user.username;
+  console.log(linker);
+  let linkee = member.nickname ?? member.user.username;
   const fileReturn = new AttachmentBuilder(`arenas/league${currentPOL}.png`);
       const embedReturn = new EmbedBuilder()
+      .setTitle(`${name} <:${expEmoji.emojiName}:${expEmoji.emojiId}>\n`)
+      .setThumbnail(`attachment://league${currentPOL}.png`)
+      .setURL(`https://royaleapi.com/player/${playertag}`)
+      .setColor("Purple")
+      .addFields(
+        { name: `__CW2 Wins__ <:cw2:1196604288886124585>`, value: `${cw2Wins}`, inline: true },
+        { name: `__CC Wins__ <:classicWin:1196602845890355290>`, value: `${classicWins}`, inline: true },
+        { name: `__GC Wins__ <:grandChallenge:1196602855482728560>`, value: `${grandWins}`, inline: true }
+      )
+      .setFooter({ text: `${account.name} linked by ${linker}!`, iconURL: interaction.user.displayAvatarURL() })
+      .setDescription(description);
+
+      const embedReturnNoLink = new EmbedBuilder()
       .setTitle(`${name} <:${expEmoji.emojiName}:${expEmoji.emojiId}>\n`)
       .setThumbnail(`attachment://league${currentPOL}.png`)
       .setURL(`https://royaleapi.com/player/${playertag}`)
@@ -193,7 +273,7 @@ async function playerStats(account){
       .setDescription(description);
       
       //interaction.editReply({ embeds: [embedReturn], files: [file] });
-      return {embedReturn, fileReturn};
+      return {embedReturn, embedReturnNoLink, fileReturn, name, playertag};
   
 }
 

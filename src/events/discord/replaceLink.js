@@ -62,41 +62,49 @@ module.exports = {
       const sentMessage = await channel.send({ content: `[${clan.name}](<${clanLink}>): Expire <t:${expiryTime}:R>`}); // bot's message with countdown
       const messageId = sentMessage.id; // countdown message id
 
-
-      
-
-      // Check if the clan is already in the array
-      const index = data.clans.findIndex(item => item.clanName === clan.name);
-
-      if (index !== -1) {
-        if ('oldBotMessageId' in data.clans[index]) {
-          const oldBotChannel = await client.channels.fetch(data.clans[index].oldBotChannelId);
-          const oldBotMessage = await oldBotChannel.messages.fetch(data.clans[index].oldBotMessageId);
-          oldBotMessage.delete();
-          delete data.clans[index].oldBotMessageId;
-          delete data.clans[index].oldBotChannelId;
+      if (clan.name in data.clans) {
+        if ('oldBotMessageId' in data.clans[clan.name]) {
+          try {
+            const oldBotChannel = await client.channels.fetch(data.clans[clan.name].oldBotChannelId);
+            const oldBotMessage = await oldBotChannel.messages.fetch(data.clans[clan.name].oldBotMessageId);
+            oldBotMessage.delete();
+            delete data.clans[clan.name].oldBotMessageId;
+            delete data.clans[clan.name].oldBotChannelId;
+          }
+          catch (error) {
+            console.log("Old bot message was deleted..., removing from file");
+            delete data.clans[clan.name].oldBotMessageId;
+            delete data.clans[clan.name].oldBotChannelId;            
+          }
         }
+
         // If the clan is already in the array, update the existing object
-        if (data.clans[index].expiryTime <= expiryTime){ // new link posted
-          data.clans[index].expiryTime = expiryTime;
-          let deleteOriginalCoutndown = await channel.messages.fetch(data.clans[index].messageId);
-          deleteOriginalCoutndown.delete();
-          data.clans[index].messageId = messageId;
+        if (data.clans[clan.name].expiryTime <= expiryTime){ // new link posted
+          try {
+            data.clans[clan.name].expiryTime = expiryTime;
+            let deleteOriginalCoutndown = await channel.messages.fetch(data.clans[clan.name].messageId);
+            deleteOriginalCoutndown.delete();
+            data.clans[clan.name].messageId = messageId;
+          } catch (error) {
+            data.clans[clan.name].expiryTime = expiryTime;
+            data.clans[clan.name].messageId = messageId;
+          }
         }
         else{
-          data.clans[index].expiryTime = expiryTime;
-          data.clans[index].channelId = originalMessage.channelId;
-          data.clans[index].messageId = messageId; // store message ID
+          // If new link posted, change to that message expiry. 
+          data.clans[clan.name].expiryTime = expiryTime;
+          data.clans[clan.name].channelId = originalMessage.channelId;
+          data.clans[clan.name].messageId = messageId; // store message ID
         }
 
       } else {
         // If the clan is not in the array, add a new object
-        data.clans.push({
-          clanName: clan.name,
+        data.clans[clan.name] = {
+          clantag: clan.tag,
           expiryTime: expiryTime,
           channelId: originalMessage.channelId,
           messageId: messageId
-        });
+        };
       }
       // Store the updated array in the file
       fs.writeFileSync(filePath, JSON.stringify(data));

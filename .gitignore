@@ -2,3 +2,5 @@ node_modules
 .env
 config.json
 JSON_Data/
+guildInfo/
+moveMongostuff.js

@@ -58,13 +58,13 @@ module.exports = {
       .setLabel("Confirm Account")
       .setStyle(ButtonStyle.Primary);
 
-      // const cancel = new ButtonBuilder()
-      // .setCustomId('cancel')
-      // .setLabel("Cancel")
-      // .setStyle(ButtonStyle.Secondary);
+      const cancel = new ButtonBuilder()
+      .setCustomId('cancel')
+      .setLabel('Cancel')
+      .setStyle(ButtonStyle.Secondary);
 
       const row = new ActionRowBuilder()
-      .addComponents(confirm);
+      .addComponents(cancel, confirm);
 
       currentMessage = await channel.send({ embeds: [playerMessage.embedReturn], files: [playerMessage.fileReturn], components: [row] });
 
