@@ -5,29 +5,18 @@ const path = require('path');
 
 module.exports = {
   data: new SlashCommandBuilder()
-  .setName("create-clan")
-  .setDescription("Add a clan to your server.")
-  .addStringOption(option =>
-    option.setName("clantag")
-    .setDescription("What is the clantag for your clan?")
-    .setRequired(true))
+  .setName("delete-clan")
+  .setDescription("Delete a clan from your server.")
   .addStringOption(option =>
     option.setName("abbreviation")
     .setDescription("What is the abbreviation you want to use for this clan?")
     .setRequired(true))
-  .addRoleOption(option =>
-    option.setName('role')
-    .setDescription('What role is used for this clan?')
-    .setRequired(false))
   .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
   async execute(interaction){
     await interaction.deferReply({ephemeral: true});
     const guild = interaction.guild;
-    let clantag = interaction.options.get("clantag").value;
     const abbrev = interaction.options.get("abbreviation").value.toLowerCase();
-    const roleId = interaction.options.get("role")?.value;
-    if (clantag.charAt(0) !== '#') clantag = '#' + clantag;
 
     const filePath = path.join(__dirname, '..', '..', '..', 'guildsInfo', `${guild.id}.json`);
 
@@ -39,31 +28,22 @@ module.exports = {
       console.error(err);
     }
     
-    let clan = await checkClan(interaction, clantag);
-    if (clan === null){
-      return;
-    }
 
-    // Use the clan's tag or abbreviation as the key in the dictionary
-    if (!data.clans[clan.name]) {
-      data.clans[clan.name] = {
-          abbreviation: abbrev,
-          clantag: clan.tag,
-          roleId: roleId,
-      };
-    } else {
-        data.clans[clan.name].abbreviation = abbrev;
-        data.clans[clan.name].clantag = clan.tag;
-        data.clans[clan.name].roleId = roleId;
+    // Modify the specific clan in the dictionary based on the abbreviation field
+    for (let clanname in data.clans) {
+      if (data.clans.hasOwnProperty(clanname)) {
+        if (data.clans[clanname].abbreviation === abbrev) {
+          // Delete specific fields from the clan
+          delete data.clans[clanname].clantag;
+          delete data.clans[clanname].roleId;
+          delete data.clans[clanname].abbreviation;
+          fs.writeFileSync(filePath, JSON.stringify(data));
+          await interaction.editReply(`The clan with abbreviation \`${abbrev}\` has been deleted from the server.`);
+          return;
+        }
+      }
     }
-    
-    fs.writeFileSync(filePath, JSON.stringify(data));
-
-    let reply = `The clan \`${clan.name}\` has been been set with the abbreviation \`${abbrev}\``;
-    if (roleId !== undefined){
-      reply += ` with the role <@&${roleId}>`
-    }
-    await interaction.editReply(reply);
+    await interaction.editReply(`No clan with abbreviation \`${abbrev}\` exists in the server.`);
   }
 }
 

@@ -11,7 +11,7 @@ module.exports = {
     const guild = originalMessage.guild;
     const channel = await guild.channels.cache.get(originalMessage.channelId);
 
-    const filePath = path.join(__dirname, '..', '..', '..', 'guildInfo', `${guild.id}.json`);
+    const filePath = path.join(__dirname, '..', '..', '..', 'guildsInfo', `${guild.id}.json`);
     let data = [];
     try {
       data = JSON.parse(fs.readFileSync(filePath));

@@ -19,7 +19,7 @@ module.exports = {
 async function ensureGuildData(client) {
   // Iterate over each guild the bot is in
   client.guilds.cache.forEach(async (guild) => {
-    const filePath = path.join(__dirname, '..', '..', 'guildInfo', `${guild.id}.json`);
+    const filePath = path.join(__dirname, '..', '..', 'guildsInfo', `${guild.id}.json`);
     let data = {};
     try { 
       // Try to read the existing data
@@ -48,7 +48,7 @@ async function ensureGuildData(client) {
 async function checkExpiry() {
   // Iterate over each guild the bot is in
   client.guilds.cache.forEach(async (guild) => {
-    const filePath = path.join(__dirname, '..', '..', 'guildInfo', `${guild.id}.json`);
+    const filePath = path.join(__dirname, '..', '..', 'guildsInfo', `${guild.id}.json`);
     let data = [];
     try { 
       data = JSON.parse(fs.readFileSync(filePath));

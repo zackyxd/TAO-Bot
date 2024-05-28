@@ -22,7 +22,7 @@ module.exports = {
       
       console.log(role);
 
-      const filePath = path.join(__dirname, '..', '..', '..', 'guildInfo', `${guild.id}.json`);
+      const filePath = path.join(__dirname, '..', '..', '..', 'guildsInfo', `${guild.id}.json`);
 
       let data = {};
       try {

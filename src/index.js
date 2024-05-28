@@ -69,7 +69,7 @@ client.on('guildCreate', guild => {
 	};
 	// We can save the settings for this guild to the disk. This is great for things like per-guild prefixes and role names.
 	// We can use the JSON stringify function to make the data readable and then write to the file.
-	fs.writeFileSync(`./guildInfo/${guild.id}.json`, JSON.stringify(data, null, 2));
+	fs.writeFileSync(`./guildsInfo/${guild.id}.json`, JSON.stringify(data, null, 2));
 });
 
 

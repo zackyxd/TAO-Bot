@@ -37,7 +37,7 @@ module.exports = {
         return;
       }
       
-      const filePath = path.join(__dirname, '..', '..', '..', 'guildInfo', `${interaction.guild.id}.json`);
+      const filePath = path.join(__dirname, '..', '..', '..', 'guildsInfo', `${interaction.guild.id}.json`);
       let data = {};
       try {
         data = JSON.parse(fs.readFileSync(filePath));
@@ -45,8 +45,8 @@ module.exports = {
       catch (err){
         console.error(err);
       }
-      let oldUserId = data.players[playertag] ? data.players[playertag].userId : '';
-      if (data.players[playertag] && oldUserId !== member.id){
+      let oldUserId = data.playersTag[playertag] ? data.playersTag[playertag].userId : '';
+      if (data.playersTag[playertag] && oldUserId !== member.id){
         const confirm = new ButtonBuilder()
           .setCustomId(`change@_@${member.user.id}@_@${playerMessage.name}@_@#${playerMessage.playertag}@_@${interaction.user.id}`)
           .setLabel("Change Link?")
@@ -65,20 +65,37 @@ module.exports = {
         interaction.followUp({ content: `This playertag is already linked to <@${oldUserId}>, would you like to switch this to <@${member.id}>?`, ephemeral: true })
       }
       // Write new player
-      else if (!data.players[playertag]){
-        data.players[playertag] = { userId: member.user.id };
+      else if (!data.playersTag[playertag]){
+
+        data.playersTag[playertag] = { userId: member.user.id };
+
+        if (data.playersId[member.user.id].playertags.includes(playertag)) {
+          // if userId already exists, append playertag to existing array for multiple links
+          data.playersId[member.user.id].playertags.push(playertag)
+        } else {
+          data.playersId[member.user.id] = { playertags: [playertag] };
+        }
         try {
           await member.setNickname(account.name);
           await interaction.editReply({ embeds: [playerMessage.embedReturn], files: [playerMessage.fileReturn] });
           
         } catch (error) {
           await interaction.editReply({ embeds: [playerMessage.embedReturnNoLink], files: [playerMessage.fileReturn] });
-          await interaction.followUp({ content: "There was an error changing their name, permission issue likely.", ephemeral: true })
+          await interaction.followUp({ content: "Couldn't change their name, but link was still completed.", ephemeral: true })
         }
       }
       else{
+        if (data.playersId[member.user.id]) {
+          // if userId already exists, append playertag to existing array for multiple links
+          if (!data.playersId[member.user.id].playertags.includes(playertag)) {
+            data.playersId[member.user.id].playertags.push(playertag)
+          }
+        } 
+        else {
+          data.playersId[member.user.id] = { playertags: [playertag] };
+        }
         await interaction.editReply({ embeds: [playerMessage.embedReturnNoLink], files: [playerMessage.fileReturn] });
-        interaction.followUp({ content: `This playertag is already linked to <@${oldUserId}>, no change made.`, ephemeral: true })
+        interaction.followUp({ content: `This playertag was already linked to <@${oldUserId}>.`, ephemeral: true })
       }
 
       fs.writeFileSync(filePath, JSON.stringify(data));
@@ -244,7 +261,6 @@ async function playerStats(account, interaction, member){
   description += `__**Card Levels**__ <:cards:1196602848411127818>\n<:experience15:1196504104256671794>: ${level15}\n<:experience14:1196504101756874764>: ${level14}\n<:experience13:1196504100200796160>: ${level13}\n<:experience12:1196504097449312336>: ${level12}`;
 
   let linker = interaction.member.nickname ?? interaction.user.username;
-  console.log(linker);
   let linkee = member.nickname ?? member.user.username;
   const fileReturn = new AttachmentBuilder(`arenas/league${currentPOL}.png`);
       const embedReturn = new EmbedBuilder()
