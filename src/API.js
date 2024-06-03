@@ -14,15 +14,17 @@ async function fetchData(url, filename, print) {
         Authorization: `Bearer ${key}`,
       },
     });
-    // console.log(response.status);
+    //console.log(response.status);
     if (response.status !== 200) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
+    // throw { response: { status: 503 } };
 
     const data = response.data;
     // Data to string
     const dataString = JSON.stringify(data, null, 2);
     // Check if data exists
+    //print = false;
     if (data && print === true) {
       // Write the data to a file
       fs.writeFile(`JSON_Data/${filename}.json`, dataString, (err) => {

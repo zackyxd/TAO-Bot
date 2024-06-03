@@ -24,7 +24,7 @@ module.exports = {
   async execute(interaction){
     await interaction.deferReply({ephemeral: true});
     const guild = interaction.guild;
-    let clantag = interaction.options.get("clantag").value;
+    let clantag = interaction.options.get("clantag").value.toUpperCase();
     const abbrev = interaction.options.get("abbreviation").value.toLowerCase();
     const roleId = interaction.options.get("role")?.value;
     if (clantag.charAt(0) !== '#') clantag = '#' + clantag;
@@ -78,10 +78,10 @@ async function checkClan(interaction, clantag) {
     const attachment = new AttachmentBuilder(`badges/${filename}.png`);
     const embed = new EmbedBuilder()
     .setTitle("Error")
-    .setDescription(`This tag \`${clantag}\` does not exist.`)
+    .setDescription(`This clantag \`${clantag}\` does not exist.`)
     .setColor('Red')
     .setThumbnail(`attachment://${filename}.png`)
-    interaction.editReply({ embeds: [embed], files: [attachment] });
+    await interaction.editReply({ embeds: [embed], files: [attachment] });
     return null;
   }
   if (clanData === 503){
@@ -89,7 +89,7 @@ async function checkClan(interaction, clantag) {
     .setTitle("Error")
     .setDescription(`Clash Royale is currently on maintainence break. Please try again later.`)
     .setColor('Red')
-    interaction.editReply({ embeds: [embed] });
+    await interaction.editReply({ embeds: [embed] });
     return null;
   }
   else{

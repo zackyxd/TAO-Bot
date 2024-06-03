@@ -34,19 +34,22 @@ module.exports = {
       catch (err){
         console.error(err);
       }
-
+      let userId;
       if(data.playersTag[playertag]){
-        let userId = data.playersTag[playertag].userId;
+        userId = data.playersTag[playertag].userId;
         delete data.playersTag[playertag];
         let index = data.playersId[userId].playertags.indexOf(playertag);
         if (index !== -1){
           data.playersId[userId].playertags.splice(index, 1);
         }
+        await interaction.editReply(`The player with tag \`${playertag}\` has been unlinked from <@${userId}>`);
+        fs.writeFileSync(filePath, JSON.stringify(data));
+      }
+      else{
+        await interaction.editReply(`There was no player linked to \`${playertag}\``);
       }
 
-      fs.writeFileSync(filePath, JSON.stringify(data));
 
-      await interaction.editReply(`The player with tag \`${playertag}\` has been unlinked.`);
       
 
     }

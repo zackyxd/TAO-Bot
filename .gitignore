@@ -3,4 +3,5 @@ node_modules
 config.json
 JSON_Data/
 guildsInfo/
+archivedGuildsInfo/
 moveMongostuff.js

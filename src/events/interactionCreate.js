@@ -51,13 +51,7 @@ module.exports = {
 
         const user = await interaction.guild.members.cache.get(userId)
 
-        const filePath = path.join(
-          __dirname,
-          '..',
-          '..',
-          'guildsInfo',
-          `${interaction.guild.id}.json`
-        )
+        const filePath = path.join(__dirname, '..', '..', 'guildsInfo', `${interaction.guild.id}.json`);
         let data = {}
         try {
           data = JSON.parse(fs.readFileSync(filePath))
@@ -79,7 +73,7 @@ module.exports = {
           return
         }
 
-        // check if already linked to someone
+        // check if already linked to someone, Change
         {
           let oldUserId = data.playersTag[playertag] ? data.playersTag[playertag].userId : '';
           if (data.playersTag[playertag] && oldUserId !== parts[1]) {
@@ -100,11 +94,11 @@ module.exports = {
             await interaction.editReply({ components: [row] })
 
             await interaction.followUp({
-              content: `This playertag is already linked to <@${oldUserId}>, would you like to switch this to <@${parts[1]}>?`,
+              content: `This playertag is already linked to <@${oldUserId}>, would you like to switch this to <@${parts[1]}>? Click \`Change Link\` above if so.`,
               ephemeral: true
             })
           } 
-          else {
+          else { // just link player
             try {
               // change name
               newConfirm = new ButtonBuilder()
@@ -125,11 +119,14 @@ module.exports = {
                 await interaction.followUp({ content: "Issue changing name, link should be going through still", ephemeral: true })
               }
               await interaction.message.edit({ components: [confirmRow] })
+              
               data.playersTag[playertag] = { userId: userId }
-
-              if (data.playersId[userId].playertags) {
+              //console.log(data.playersId[userId]);
+              if (data.playersId[userId]) {
                 // if userId already exists, append playertag to existing array for multiple links
-                data.playersId[userId].playertags.push(playertag)
+                if (!data.playersId[userId].playertags.includes(playertag)) {
+                  data.playersId[userId].playertags.push(playertag);
+                }
               } else {
                 data.playersId[userId] = { playertags: [playertag] };
               }
@@ -259,7 +256,6 @@ module.exports = {
           } else {
             data.playersId[userId] = { playertags: [playertag] };
           }
-
           fs.writeFileSync(filePath, JSON.stringify(data))
         } catch (error) {
           // error changing or linking

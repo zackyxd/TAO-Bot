@@ -1,6 +1,7 @@
 const { Events, EmbedBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
 const API = require("../../API.js");
-const Emoji = require('../../models/EmojiModel.js');
+const fs = require('fs');
+const path = require('path');
 
 module.exports = {
   name: Events.MessageCreate,
@@ -66,7 +67,7 @@ module.exports = {
       const row = new ActionRowBuilder()
       .addComponents(cancel, confirm);
 
-      currentMessage = await channel.send({ embeds: [playerMessage.embedReturn], files: [playerMessage.fileReturn], components: [row] });
+      currentMessage = await channel.send({ embeds: [playerMessage.embedReturn], components: [row] });
 
     }
   }
@@ -98,6 +99,15 @@ async function playertag(playertag) {
 
 async function playerStats(account){
   if (account === null) return null;
+  const emojiPath = path.join(__dirname, '..', '..', '..', `emojis.json`);
+  let emojis = {}
+  try {
+    const data = fs.readFileSync(emojiPath, 'utf8');
+    emojis = JSON.parse(data); // Parse the JSON string into an array
+  } catch (err) {
+    console.error('Error loading emojis:', err);
+    return []; // Return an empty array in case of an error
+  }
   let name = account.name;
   let playertag = (account.tag).substring(1);
   let level = account.expLevel;
@@ -182,12 +192,9 @@ async function playerStats(account){
     }
   }
 
-  let findEmoji = await Emoji.findOne({ emojiName: badgeId });
-
-  let expEmoji = await Emoji.findOne({ emojiName: `experience${level}` });
 
   let description = "";
-  description += `<:${badgeId}:${findEmoji.emojiId}> ${clan} ${role}\n\n`
+  description += `<:${badgeId}:${findEmojiId(emojis, badgeId)}> ${clan} ${role}\n\n`
   description += `__**Path of Legends**__\n`;
   if (currentPOLTrophies !== undefined){
     description += `Current: <:polMedal:1196602844166492261> ${currentPOLTrophies}\n`;
@@ -215,10 +222,11 @@ async function playerStats(account){
 
   description += `__**Card Levels**__ <:cards:1196602848411127818>\n<:experience15:1196504104256671794>: ${level15}\n<:experience14:1196504101756874764>: ${level14}\n<:experience13:1196504100200796160>: ${level13}\n<:experience12:1196504097449312336>: ${level12}`;
 
-  const fileReturn = new AttachmentBuilder(`arenas/league${currentPOL}.png`);
+  //const fileReturn = new AttachmentBuilder(`arenas/league${currentPOL}.png`);
+  const playerLeagueIcon = getLink("league" + currentPOL + ".png");
       const embedReturn = new EmbedBuilder()
-      .setTitle(`${name} <:${expEmoji.emojiName}:${expEmoji.emojiId}>\n`)
-      .setThumbnail(`attachment://league${currentPOL}.png`)
+      .setTitle(`${name} <:experience${level}:${findEmojiId(emojis, `experience${level}`)}>\n`)
+      .setThumbnail(playerLeagueIcon)
       .setURL(`https://royaleapi.com/player/${playertag}`)
       .setColor("Purple")
       .addFields(
@@ -228,13 +236,41 @@ async function playerStats(account){
       )
       .setDescription(description);
       
-      //interaction.editReply({ embeds: [embedReturn], files: [file] });
-      return {embedReturn, fileReturn, name, playertag};
+      //await interaction.editReply({ embeds: [embedReturn], files: [file] });
+      return {embedReturn, name, playertag};
   
 }
 
+function getLink(key) {
+  // Read the JSON file
+  const data = fs.readFileSync('imageLinks.json');
+  const imageLinks = JSON.parse(data);
+
+  // Check if the key exists in the JSON object
+  if (imageLinks.hasOwnProperty(key)) {
+    return imageLinks[key]; // Return the link associated with the key
+  } else {
+    return 'Key not found'; // Key does not exist in the JSON object
+  }
+}
 
 
+function findEmojiId(emojiJson, nameLookingFor) {
+  let emojiId = emojiJson.find(emoji => {
+    // Ensure both values are strings and trim any whitespace
+    const emojiName = String(emoji.name).trim();
+    const trimmedName = String(nameLookingFor).trim();
+
+    return emojiName === trimmedName;
+  })?.id;
+  if (emojiId) {
+    //console.log(`Found emoji ID: ${emojiId}`);
+    return emojiId;
+  } else {
+    console.error(`Emoji not found for: ${nameLookingFor}`);
+    return null;
+  }
+}
 
 function checkLevel(level, rarity){
   let actualLevel = 0;

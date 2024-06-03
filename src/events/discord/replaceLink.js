@@ -1,7 +1,7 @@
 const { Events } = require('discord.js');
 const API = require("../../API.js");
 const path = require('path');
-const fs = require('fs');
+const fs = require('fs').promises; // Use fs.promises for asynchronous operations
 
 module.exports = {
   name: Events.MessageCreate,
@@ -9,12 +9,13 @@ module.exports = {
     if (originalMessage.author.bot) return;
 
     const guild = originalMessage.guild;
-    const channel = await guild.channels.cache.get(originalMessage.channelId);
+    const channel = guild.channels.cache.get(originalMessage.channelId);
 
     const filePath = path.join(__dirname, '..', '..', '..', 'guildsInfo', `${guild.id}.json`);
     let data = [];
     try {
-      data = JSON.parse(fs.readFileSync(filePath));
+      const fileData = await fs.readFile(filePath, 'utf8');
+      data = JSON.parse(fileData);
     }
     catch (err){
       console.error(err);
@@ -24,8 +25,7 @@ module.exports = {
       return;
     }
     else{
-      let parsedMessage = (originalMessage.content).split(/\s+/);
-      console.log(parsedMessage);
+      let parsedMessage = originalMessage.content.split(/\s+/);
       var clan;
       var clanLink;
       let foundClan = false;
@@ -40,7 +40,7 @@ module.exports = {
         }
         clan = await getClanName(match[1]);
         if (match && !foundClan){
-          originalMessage.delete().then(msg => console.log("Deleted message")).catch(console.error); // delete the real user's message with the link
+          await originalMessage.delete(); // delete the real user's message with the link
           foundClan = true; // make the clan found
           clan = await getClanName(match[1]); // get clan info
           clanLink = apiLink[0]; // the clan link is the msg that was parsed 
@@ -55,11 +55,10 @@ module.exports = {
       }
       
       const currentTime = Math.floor(Date.now() / 1000); // Current Unix timestamp in seconds
-      //const threeDaysInSeconds = 3 * 24 * 60 * 60; // Number of seconds in 3 days
-      const threeDaysInSeconds = 5; // Number of seconds in 3 days
+      const threeDaysInSeconds = 3 * 24 * 60 * 60; // Number of seconds in 3 days
       const expiryTime = currentTime + threeDaysInSeconds; // Expiry time 3 days from now
 
-      const sentMessage = await channel.send({ content: `[${clan.name}](<${clanLink}>): Expire <t:${expiryTime}:R>`}); // bot's message with countdown
+      const sentMessage = await channel.send({ content: `[${clan.name}](<${clanLink}>): Expires <t:${expiryTime}:R>`}); // bot's message with countdown
       const messageId = sentMessage.id; // countdown message id
 
       if (clan.name in data.clans) {
@@ -107,9 +106,8 @@ module.exports = {
         };
       }
       // Store the updated array in the file
-      fs.writeFileSync(filePath, JSON.stringify(data));
+      await fs.writeFile(filePath, JSON.stringify(data, null, 2));
     }
-    
   }
 }
 

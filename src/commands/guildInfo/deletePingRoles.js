@@ -6,10 +6,10 @@ const path = require('path');
 module.exports = {
   data: new SlashCommandBuilder()
   .setName("delete-ping-role")
-  .setDescription("Delete a role that members can ping to remove the check.")
+  .setDescription("Delete a role that members can ping.")
   .addRoleOption(option =>
     option.setName("role-to-ping")
-    .setDescription("Which role will be pinged?")
+    .setDescription("Which role will be deleted from being pinged?")
     .setRequired(true))
   .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 

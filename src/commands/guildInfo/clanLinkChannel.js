@@ -20,9 +20,8 @@ module.exports = {
       const guild = interaction.guild;
       const linkChannel = interaction.options.getChannel("link-channel");
       
-      console.log(linkChannel);
       if (linkChannel.type !== 0){
-        interaction.editReply("Please make sure the channel is a text channel.");
+        await interaction.editReply("Please make sure the channel is a text channel.");
         return;
       }
 

@@ -51,12 +51,16 @@ module.exports = {
     // Check if the icon is a valid Unicode emoji
     const regex = /^[\p{Emoji_Presentation}\p{Emoji}\u3030\ufe0f]+$/u;
     if (!regex.test(icon)) {
-      await interaction.editReply({ content: 'Please enter a valid icon. Don\'t use discord emojis.', ephemeral: true });
+      await interaction.editReply({ content: 'Please enter a valid icon. Discord emojis might not work.', ephemeral: true });
+      return;
+    }
+    if (icon.length >= 7){
+      await interaction.editReply({ content: 'Please use less icons.', ephemeral: true });
       return;
     }
 
     if (word.includes(' ')){
-      await interaction.editReply({ content: "Please make sure you are using one word."});
+      await interaction.editReply({ content: "Please make sure you are using one word in the description."});
       return;
     }
     else if (word.length > 15){
@@ -72,6 +76,27 @@ module.exports = {
     }
     catch (err){
       console.error(err);
+    }
+
+    // Check if the role already exists in pingableRoles
+    if (data.pingableRoles.hasOwnProperty(roleId)) {
+      // Get the old description of the role
+      const oldDescription = data.pingableRoles[roleId].description;
+
+      // Update the description of the role in pingableRoles
+      data.pingableRoles[roleId].description = word;
+
+      // Iterate over all players
+      for (let userId in data.playersId) {
+        let player = data.playersId[userId];
+
+        // Check if the player has the role that was updated
+        if (player.hasOwnProperty(oldDescription)) {
+          // Update the description of the role in the player's data
+          player[word] = player[oldDescription];
+          delete player[oldDescription];
+        }
+      }
     }
 
     // Initialize pingableRoles as an empty object if it doesn't exist

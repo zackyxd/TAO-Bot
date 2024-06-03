@@ -37,6 +37,9 @@ module.exports = {
           delete data.clans[clanname].clantag;
           delete data.clans[clanname].roleId;
           delete data.clans[clanname].abbreviation;
+          delete data.clans[clanname].warDayChannel;
+          delete data.clans[clanname].clanlogsChannel;
+          delete data.clans[clanname].clanInfo;
           fs.writeFileSync(filePath, JSON.stringify(data));
           await interaction.editReply(`The clan with abbreviation \`${abbrev}\` has been deleted from the server.`);
           return;
@@ -61,7 +64,7 @@ async function checkClan(interaction, clantag) {
     .setDescription(`This tag \`${clantag}\` does not exist.`)
     .setColor('Red')
     .setThumbnail(`attachment://${filename}.png`)
-    interaction.editReply({ embeds: [embed], files: [attachment] });
+    await interaction.editReply({ embeds: [embed], files: [attachment] });
     return null;
   }
   if (clanData === 503){
@@ -69,7 +72,7 @@ async function checkClan(interaction, clantag) {
     .setTitle("Error")
     .setDescription(`Clash Royale is currently on maintainence break. Please try again later.`)
     .setColor('Red')
-    interaction.editReply({ embeds: [embed] });
+    await interaction.editReply({ embeds: [embed] });
     return null;
   }
   else{

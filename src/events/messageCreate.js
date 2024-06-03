@@ -13,20 +13,24 @@ module.exports = {
     catch (err){
       console.error(err);
     }
-
     let member = message.author;
 
     for (let roleId in data.pingableRoles){
       if (message.mentions.roles.some(role => role.id === roleId)){
-        console.log(roleId);
-        console.log("role was pinged");
         // Check if the player already exists in playersId
-        console.log(!data.playersId[member.id])
         if (!data.playersId[member.id]) {
           data.playersId[member.id] = {};
         }
         // Add the field to the player with the key being the roleId
-        data.playersId[member.id][data.pingableRoles[roleId].description] = true;
+        if (data.pingableRoles[roleId].timeToPing !== undefined){
+          data.playersId[member.id][data.pingableRoles[roleId].description] = true;
+        }
+        else{
+          data.playersId[member.id][data.pingableRoles[roleId].description] = false;
+        }
+        if (!message.member.roles.cache.has(data.staffRole)){
+          message.react('👍');
+        }
       }
     }
 

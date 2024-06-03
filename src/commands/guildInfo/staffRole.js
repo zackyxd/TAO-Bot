@@ -20,7 +20,7 @@ module.exports = {
       const guild = interaction.guild;
       const role = interaction.options.getRole("role");
       
-      console.log(role);
+      //console.log(role);
 
       const filePath = path.join(__dirname, '..', '..', '..', 'guildsInfo', `${guild.id}.json`);
 

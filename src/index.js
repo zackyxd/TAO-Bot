@@ -76,8 +76,8 @@ client.on('guildCreate', guild => {
 (async () => {
   try {
 
-    await mongoose.connect(process.env.MONGODB_URI);
-    console.log("Connected to mongoDB.");
+    //await mongoose.connect(process.env.MONGODB_URI);
+    //console.log("Connected to mongoDB.");
     client.login(process.env.TOKEN);
   
   } 

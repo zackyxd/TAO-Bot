@@ -2,7 +2,6 @@ const API = require("../../API.js");
 const { SlashCommandBuilder, PermissionFlagsBits, AttachmentBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require("discord.js");
 //const Abbrev = require("../../models/02ClanAbbreviations.js");
 //const User = require("../../models/02UserModel.js");
-const Emoji = require('../../models/EmojiModel.js');
 const path = require('path');
 const fs = require('fs');
 
@@ -60,27 +59,32 @@ module.exports = {
         const row = new ActionRowBuilder()
           .addComponents(cancel, confirm);
 
-        await interaction.editReply({ embeds: [playerMessage.embedReturnNoLink], files: [playerMessage.fileReturn], components: [row] });
+        await interaction.editReply({ embeds: [playerMessage.embedReturnNoLink], components: [row] });
 
-        interaction.followUp({ content: `This playertag is already linked to <@${oldUserId}>, would you like to switch this to <@${member.id}>?`, ephemeral: true })
+        interaction.followUp({ content: `This playertag is already linked to <@${oldUserId}>, would you like to switch this to <@${member.id}>? Click \`Change Link\` above if so.`, ephemeral: true })
       }
       // Write new player
-      else if (!data.playersTag[playertag]){
-
+      else if (!data.playersTag[playertag]) {
         data.playersTag[playertag] = { userId: member.user.id };
-
-        if (data.playersId[member.user.id].playertags.includes(playertag)) {
-          // if userId already exists, append playertag to existing array for multiple links
-          data.playersId[member.user.id].playertags.push(playertag)
-        } else {
+      
+        // Check if the userId already exists in playersId
+        if (!data.playersId[member.user.id]) {
+          console.log("MAKING NEW USER");
+          // If not, create a new object for this userId
           data.playersId[member.user.id] = { playertags: [playertag] };
+        } else {
+          // If userId exists and playertag is not already in the array, add it
+          if (!data.playersId[member.user.id].playertags.includes(playertag)) {
+            console.log("ADDING PLAYERTAG TO EXISTING USER");
+            data.playersId[member.user.id].playertags.push(playertag);
+          }
         }
         try {
           await member.setNickname(account.name);
-          await interaction.editReply({ embeds: [playerMessage.embedReturn], files: [playerMessage.fileReturn] });
+          await interaction.editReply({ embeds: [playerMessage.embedReturn] });
           
         } catch (error) {
-          await interaction.editReply({ embeds: [playerMessage.embedReturnNoLink], files: [playerMessage.fileReturn] });
+          await interaction.editReply({ embeds: [playerMessage.embedReturnNoLink] });
           await interaction.followUp({ content: "Couldn't change their name, but link was still completed.", ephemeral: true })
         }
       }
@@ -94,7 +98,7 @@ module.exports = {
         else {
           data.playersId[member.user.id] = { playertags: [playertag] };
         }
-        await interaction.editReply({ embeds: [playerMessage.embedReturnNoLink], files: [playerMessage.fileReturn] });
+        await interaction.editReply({ embeds: [playerMessage.embedReturnNoLink] });
         interaction.followUp({ content: `This playertag was already linked to <@${oldUserId}>.`, ephemeral: true })
       }
 
@@ -118,7 +122,7 @@ async function getPlayertag(interaction, playertag) {
     .setDescription(`Player \`${playertag}\` not found.`)
     .setColor('Red')
     //.setThumbnail(`attachment://${filename}.png`)
-    interaction.editReply({ embeds: [embed] });
+    await interaction.editReply({ embeds: [embed] });
     return null;
   }
   if (playerData === 503){
@@ -126,7 +130,7 @@ async function getPlayertag(interaction, playertag) {
     //.setTitle("Error")
     .setDescription(`Clash Royale is currently on maintainence break. Please try again later.`)
     .setColor('Red')
-    interaction.editReply({ embeds: [embed] });
+    await interaction.editReply({ embeds: [embed] });
     return null;
   }
   // let errorCode = API.checkStatus(null, playerData, playertag);
@@ -142,7 +146,18 @@ async function getPlayertag(interaction, playertag) {
 }
 
 async function playerStats(account, interaction, member){
+
+  
   if (account === null) return null;
+  const emojiPath = path.join(__dirname, '..', '..', '..', `emojis.json`);
+  let emojis = {}
+  try {
+    const data = fs.readFileSync(emojiPath, 'utf8');
+    emojis = JSON.parse(data); // Parse the JSON string into an array
+  } catch (err) {
+    console.error('Error loading emojis:', err);
+    return []; // Return an empty array in case of an error
+  }
   let name = account.name;
   let playertag = (account.tag).substring(1);
   let level = account.expLevel;
@@ -227,12 +242,8 @@ async function playerStats(account, interaction, member){
     }
   }
 
-  let findEmoji = await Emoji.findOne({ emojiName: badgeId });
-
-  let expEmoji = await Emoji.findOne({ emojiName: `experience${level}` });
-
   let description = "";
-  description += `<:${badgeId}:${findEmoji.emojiId}> ${clan} ${role}\n\n`
+  description += `<:${badgeId}:${findEmojiId(emojis, badgeId)}> ${clan} ${role}\n\n`
   description += `__**Path of Legends**__\n`;
   if (currentPOLTrophies !== undefined){
     description += `Current: <:polMedal:1196602844166492261> ${currentPOLTrophies}\n`;
@@ -262,10 +273,12 @@ async function playerStats(account, interaction, member){
 
   let linker = interaction.member.nickname ?? interaction.user.username;
   let linkee = member.nickname ?? member.user.username;
-  const fileReturn = new AttachmentBuilder(`arenas/league${currentPOL}.png`);
+  
+  //const fileReturn = new AttachmentBuilder(`arenas/league${currentPOL}.png`);
+      const playerLeagueIcon = getLink("league" + currentPOL + ".png");
       const embedReturn = new EmbedBuilder()
-      .setTitle(`${name} <:${expEmoji.emojiName}:${expEmoji.emojiId}>\n`)
-      .setThumbnail(`attachment://league${currentPOL}.png`)
+      .setTitle(`${name} <:experience${level}:${findEmojiId(emojis, `experience${level}`)}>\n`)
+      .setThumbnail(playerLeagueIcon)
       .setURL(`https://royaleapi.com/player/${playertag}`)
       .setColor("Purple")
       .addFields(
@@ -277,8 +290,8 @@ async function playerStats(account, interaction, member){
       .setDescription(description);
 
       const embedReturnNoLink = new EmbedBuilder()
-      .setTitle(`${name} <:${expEmoji.emojiName}:${expEmoji.emojiId}>\n`)
-      .setThumbnail(`attachment://league${currentPOL}.png`)
+      .setTitle(`${name} <:experience${level}:${findEmojiId(emojis, `experience${level}`)}>\n`)
+      .setThumbnail(playerLeagueIcon)
       .setURL(`https://royaleapi.com/player/${playertag}`)
       .setColor("Purple")
       .addFields(
@@ -288,9 +301,40 @@ async function playerStats(account, interaction, member){
       )
       .setDescription(description);
       
-      //interaction.editReply({ embeds: [embedReturn], files: [file] });
-      return {embedReturn, embedReturnNoLink, fileReturn, name, playertag};
+      //await interaction.editReply({ embeds: [embedReturn], files: [file] });
+      return {embedReturn, embedReturnNoLink, name, playertag};
   
+}
+
+function getLink(key) {
+  // Read the JSON file
+  const data = fs.readFileSync('imageLinks.json');
+  const imageLinks = JSON.parse(data);
+
+  // Check if the key exists in the JSON object
+  if (imageLinks.hasOwnProperty(key)) {
+    return imageLinks[key]; // Return the link associated with the key
+  } else {
+    return 'Key not found'; // Key does not exist in the JSON object
+  }
+}
+
+function findEmojiId(emojiJson, nameLookingFor) {
+  let emojiId = emojiJson.find(emoji => {
+    // Ensure both values are strings and trim any whitespace
+    const emojiName = String(emoji.name).trim();
+    const trimmedName = String(nameLookingFor).trim();
+
+    return emojiName === trimmedName;
+  })?.id;
+
+  if (emojiId) {
+    //console.log(`Found emoji ID: ${emojiId}`);
+    return emojiId;
+  } else {
+    console.error(`Emoji not found for: ${nameLookingFor}`);
+    return null;
+  }
 }
 
 function checkLevel(level, rarity){
