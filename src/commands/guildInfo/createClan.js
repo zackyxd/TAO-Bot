@@ -19,7 +19,7 @@ module.exports = {
     option.setName('role')
     .setDescription('What role is used for this clan?')
     .setRequired(false))
-  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+  .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels),
 
   async execute(interaction){
     await interaction.deferReply({ephemeral: true});
@@ -37,6 +37,7 @@ module.exports = {
     }
     catch (err){
       console.error(err);
+      return;
     }
     
     let clan = await checkClan(interaction, clantag);

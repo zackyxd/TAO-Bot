@@ -12,7 +12,7 @@
     "axios": "^1.6.8",
     "commandkit": "^0.1.10",
     "cron": "^3.1.7",
-    "discord.js": "^14.15.2",
+    "discord.js": "^14.14.1",
     "dotenv": "^16.4.5",
     "form-data": "^4.0.0",
     "moment-timezone": "^0.5.45",

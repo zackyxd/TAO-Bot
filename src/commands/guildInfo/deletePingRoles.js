@@ -11,7 +11,7 @@ module.exports = {
     option.setName("role-to-ping")
     .setDescription("Which role will be deleted from being pinged?")
     .setRequired(true))
-  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+  .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels),
 
   async execute(interaction){
     await interaction.deferReply({ephemeral: true});
@@ -26,6 +26,7 @@ module.exports = {
     }
     catch (err){
       console.error(err);
+      return;
     }
     
 

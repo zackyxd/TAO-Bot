@@ -5,7 +5,7 @@ const fs = require('fs').promises; // Make sure to use the promise-based version
 const { EmbedBuilder, AttachmentBuilder, SlashCommandBuilder } = require('discord.js');
 //let findEmoji = await Emoji.findOne({ emojiName: clansArray[i].badgeId })
 
-async function getNewClanInfo(abbrev, guildId){
+async function getNewClanInfo(abbrev, guildId) {
   const filePath = path.join(__dirname, '..', '..', '..', 'guildsInfo', `${guildId}.json`);
 
   let data = {};
@@ -14,14 +14,15 @@ async function getNewClanInfo(abbrev, guildId){
   }
   catch (err) {
     console.error(err);
+    return;
   }
 
   let clantag;
   let clanName;
-  
-  for (let checkClanName in data.clans){
+
+  for (let checkClanName in data.clans) {
     let abbreviationCheck = data.clans[checkClanName].abbreviation;
-    if (abbreviationCheck === abbrev){
+    if (abbreviationCheck === abbrev) {
       clanName = checkClanName;
       break;
     }
@@ -30,12 +31,12 @@ async function getNewClanInfo(abbrev, guildId){
 
   const clanURL = `https://proxy.royaleapi.dev/v1/clans/${encodeURIComponent(clantag)}`;
   let clanData = await API.fetchData(clanURL, "ClanData", true);
-  if (clanData === 503 || clanData === 404){
+  if (clanData === 503 || clanData === 404) {
     return null;
   }
 
 
-    // Extract the memberList from the clanData
+  // Extract the memberList from the clanData
   const memberList = clanData.memberList;
 
   // Map through the memberList and pick only the tag, name, and role
@@ -62,7 +63,6 @@ async function getNewClanInfo(abbrev, guildId){
 }
 
 async function updateClanInfo(abbrev, guildId) {
-  console.log("Checking clan info...");
   const filePath = path.join(__dirname, '..', '..', '..', 'guildsInfo', `${guildId}.json`);
   let oldData = {};
   try {
@@ -84,7 +84,6 @@ async function updateClanInfo(abbrev, guildId) {
     console.error(`Clan with abbreviation ${abbrev} not found.`);
     return;
   }
-  console.log("Beginning updating clan info for " + clanName);
 
   // Compare old and new member lists to find changes
   const oldMembersList = oldData.clans[clanName]?.clanInfo?.membersList || [];
@@ -95,19 +94,19 @@ async function updateClanInfo(abbrev, guildId) {
 
   const warTrophyChange = compareWarTrophies(oldData.clans[clanName], newClanInfo) // get war trophy change
   let warTrophyChangeEmbed;
-  if (warTrophyChange.hasChanged){
+  if (warTrophyChange.hasChanged) {
     warTrophyChangeEmbed = await createWarTrophyChangeEmbed(warTrophyChange, newClanInfo, clanName, newClanInfo.badgeId);
   }
   const embedsToSend = memberChangeEmbeds;
-  if (warTrophyChangeEmbed){
+  if (warTrophyChangeEmbed) {
     embedsToSend.push(warTrophyChangeEmbed);
   }
 
 
-// Update the clanInfo in the old data with the new members list and other properties
-if (!oldData.clans[clanName].clanInfo) {
-  oldData.clans[clanName].clanInfo = {}; // Initialize clanInfo if it doesn't exist
-}
+  // Update the clanInfo in the old data with the new members list and other properties
+  if (!oldData.clans[clanName].clanInfo) {
+    oldData.clans[clanName].clanInfo = {}; // Initialize clanInfo if it doesn't exist
+  }
   const clanInfo = oldData.clans[clanName].clanInfo;
   clanInfo.clantag = newClanInfo.clantag;
   clanInfo.membersList = newMembersList;
@@ -122,7 +121,7 @@ if (!oldData.clans[clanName].clanInfo) {
   // Save the updated data back to the file asynchronously
   try {
     await fs.writeFile(filePath, JSON.stringify(oldData, null, 2));
-    console.log("Finished updating clan info for " + clanName);
+    // console.log("Finished updating clan info for " + clanName);
   } catch (err) {
     console.error("Error writing file: ", err);
   }
@@ -137,7 +136,7 @@ function compareClanMembers(oldMembersList, newMembersList) {
   const membersJoined = newMembersList.filter(member => !oldMembers.has(member.tag));
   const membersLeft = oldMembersList.filter(member => !newMembers.has(member.tag));
 
-  const roleChanges = newMembersList.filter(member => 
+  const roleChanges = newMembersList.filter(member =>
     oldMembers.has(member.tag) && member.role !== oldMembers.get(member.tag).role
   ).map(member => ({
     tag: member.tag,
@@ -150,7 +149,7 @@ function compareClanMembers(oldMembersList, newMembersList) {
   return { membersJoined, membersLeft, roleChanges };
 }
 
-function compareWarTrophies(oldData, newData){
+function compareWarTrophies(oldData, newData) {
 
   let oldTrophies = oldData?.clanInfo?.clanWarTrophies || 0;
   let newTrophies = newData.clanWarTrophies;
@@ -163,27 +162,27 @@ function compareWarTrophies(oldData, newData){
   };
 }
 
-async function createWarTrophyChangeEmbed(warTrophyChange, newClanInfo, clanName, badgeId, clantag){
+async function createWarTrophyChangeEmbed(warTrophyChange, newClanInfo, clanName, badgeId, clantag) {
   let description, color;
   clantag = (newClanInfo.clantag).substring(1);
-  if (warTrophyChange.change > 0){
+  if (warTrophyChange.change > 0) {
     description = `**War Trophy Increase!**\n`;
     description += `<:currentTrophies:1192213718294085702>\`${warTrophyChange.oldTrophies}\` → <:currentTrophies:1192213718294085702>\`${warTrophyChange.newTrophies}\``;
     color = 0x00FF00; // Green
   }
-  else{
+  else {
     description = `**War Trophy Decrease!**\n`;
     description += `<:currentTrophies:1192213718294085702>\`${warTrophyChange.oldTrophies}\` → <:currentTrophies:1192213718294085702>\`${warTrophyChange.newTrophies}\``;
     color = 0xFF0000; // Red
   }
   const badgeIdIcon = await getLink(badgeId + ".png");
   const embed = new EmbedBuilder()
-  .setAuthor({ name: `${clanName}`, iconURL: badgeIdIcon, url: `https://royaleapi.com/clan/${clantag}` })
-  .setColor(color)
-  //.setTitle(title)
-  .setDescription(description)
-  //.setFooter({ text: user.username, iconURL: user.displayAvatarURL() })
-  .setTimestamp();
+    .setAuthor({ name: `${clanName}`, iconURL: badgeIdIcon, url: `https://royaleapi.com/clan/${clantag}` })
+    .setColor(color)
+    //.setTitle(title)
+    .setDescription(description)
+    //.setFooter({ text: user.username, iconURL: user.displayAvatarURL() })
+    .setTimestamp();
   return embed;
 }
 
@@ -232,34 +231,35 @@ async function processMemberChanges(memberChanges, oldData, newClanInfo, clanNam
   return embedsToSend;
 }
 
-async function createMemberChangeEmbed(member, discordId, changeType, memberCount, clanName, badgeId, clantag){
+async function createMemberChangeEmbed(member, discordId, changeType, memberCount, clanName, badgeId, clantag) {
   let title, description, color;
   let tag = (member.tag).substring(1);
   clantag = (clantag).substring(1);
   let oldRole = getRoleDisplayName(member.oldRole);
   let newRole = getRoleDisplayName(member.newRole);
   let role = getRoleDisplayName(member.role);
-  const arenaIconId = await getId(member.arena);
+  let arenaName = (member.arena).replace(/[!'.,]/g, ''); // remove apostrophes
+  const arenaIconId = await getId(arenaName);
   switch (changeType) {
     case 'joined':
       description = `**${role} joined!**\n`;
-      description += `<:${member.arena}:${arenaIconId}>\`${member.trophies}\` [${member.name}](<https://royaleapi.com/player/${tag}>)`;
+      description += `<:${arenaName}:${arenaIconId}>\`${member.trophies}\` [${member.name}](<https://royaleapi.com/player/${tag}>)`;
       color = 0x00FF00; // Green
       break;
     case 'left':
       description = `**${role} left!**\n`;
-      description += `<:${member.arena}:${arenaIconId}>\`${member.trophies}\` [${member.name}](<https://royaleapi.com/player/${tag}>)`;
+      description += `<:${arenaName}:${arenaIconId}>\`${member.trophies}\` [${member.name}](<https://royaleapi.com/player/${tag}>)`;
       color = 0xFF0000; // Red
       break;
     case 'promoted':
       description = `**Promotion: ${oldRole} → __${newRole}__**\n`;
-      description += `<:${member.arena}:${arenaIconId}>\`${member.trophies}\` [${member.name}](<https://royaleapi.com/player/${tag}>)`;
-      color = 0x0000FF; // Blue
+      description += `<:${arenaName}:${arenaIconId}>\`${member.trophies}\` [${member.name}](<https://royaleapi.com/player/${tag}>)`;
+      color = 0xFFFF00; // Yellow
       break;
     case 'demoted':
-      description = `**Demotion: ${oldRole} → __${newRole}__**`;
-      description = `<:${member.arena}:${arenaIconId}>\`${member.trophies}\` [${member.name}](<https://royaleapi.com/player/${tag}>)`;
-      color = 0xFFFF00; // Yellow
+      description = `**Demotion: ${oldRole} → __${newRole}__**\n`;
+      description += `<:${arenaName}:${arenaIconId}>\`${member.trophies}\` [${member.name}](<https://royaleapi.com/player/${tag}>)`;
+      color = 0x0000FF; // Blue
       break;
     default:
       description = 'Unknown Member Update';
@@ -270,30 +270,32 @@ async function createMemberChangeEmbed(member, discordId, changeType, memberCoun
   try {
     const user = await client.users.fetch(discordId);
     const embed = new EmbedBuilder()
-    .setAuthor({ name: `${clanName} (${memberCount}/50)`, iconURL: badgeIdIcon })
-    .setColor(color)
-    //.setTitle(title)
-    .setDescription(description)
-    .setFooter({ text: user.username, iconURL: user.displayAvatarURL() })
-    .setTimestamp();
+      .setAuthor({ name: `${clanName} (${memberCount}/50)`, iconURL: badgeIdIcon, url: `https://royaleapi.com/clan/${clantag}/war/race` })
+      .setColor(color)
+      //.setTitle(title)
+      .setDescription(description)
+      .setFooter({ text: user.username, iconURL: user.displayAvatarURL() })
+      .setTimestamp();
     return embed;
   } catch (error) {
     const embed = new EmbedBuilder()
-    .setAuthor({ name: `${clanName} (${memberCount}/50)`, iconURL: badgeIdIcon, url: `https://royaleapi.com/clan/${tag}/war/race` })
-    .setColor(color)
-    //.setTitle(title)
-    .setDescription(description)
-    //.setFooter({ text: user.username, iconURL: user.displayAvatarURL() })
-    .setTimestamp();
+      .setAuthor({ name: `${clanName} (${memberCount}/50)`, iconURL: badgeIdIcon, url: `https://royaleapi.com/clan/${clantag}/war/race` })
+      .setColor(color)
+      //.setTitle(title)
+      .setDescription(description)
+      //.setFooter({ text: user.username, iconURL: user.displayAvatarURL() })
+      .setTimestamp();
     return embed;
-    
+
   }
 }
 
 
 
-function isPromotion(oldRole, newRole){
-  const roles = ['member', 'elder', 'coLeader', 'leader'];
+function isPromotion(oldRole, newRole) {
+  console.log(oldRole + " is the old role");
+  console.log(newRole + " is the new role");
+  const roles = ['member', 'elder', 'coleader', 'leader'];
   const oldRoleIndex = roles.indexOf(oldRole);
   const newRoleIndex = roles.indexOf(newRole);
   return newRoleIndex > oldRoleIndex;
@@ -312,7 +314,7 @@ function getRoleDisplayName(role) {
 // Function to get ordinal suffix
 function getOrdinalSuffix(i) {
   let j = i % 10,
-  k = i % 100;
+    k = i % 100;
   if (j == 1 && k != 11) {
     return i + "st";
   }
@@ -346,7 +348,7 @@ async function getLink(key) {
     if (imageLinks.hasOwnProperty(key)) {
       return imageLinks[key]; // Return the link associated with the key
     } else {
-      return 'Key not found'; // Key does not exist in the JSON object
+      return 'LinkKey not found'; // Key does not exist in the JSON object
     }
   } catch (err) {
     console.error('Error reading file:', err);
@@ -365,7 +367,7 @@ async function getId(key) {
     if (emoji) {
       return emoji.id; // Return the 'id' associated with the key
     } else {
-      return 'Key not found'; // Key does not exist in the array
+      return 'IdKey not found'; // Key does not exist in the array
     }
   } catch (err) {
     console.error('Error reading file:', err);

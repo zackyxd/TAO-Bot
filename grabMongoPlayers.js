@@ -16,7 +16,7 @@ const client = new MongoClient(url);
 async function run() {
   try {
 
-    const filePath = path.join(__dirname, 'guildInfo', `722956243261456536.json`);
+    const filePath = path.join(__dirname, 'guildsInfo', `722956243261456536.json`);
     let data = {};
     try {
       data = JSON.parse(fs.readFileSync(filePath));
@@ -24,7 +24,7 @@ async function run() {
     catch (err){
       console.error(err);
     }
-    console.log(data);
+    //console.log(data);
     // Connect the client to the server
     await client.connect();
 
@@ -35,22 +35,25 @@ async function run() {
     // Get the database
     const db = client.db(dbName);
     
-    // Get all documents in the Users collection that match the guild ID
-    const guildId = '722956243261456536';
+    // Get all documents in the Users collection
     const users = await db.collection('users').find().toArray();
-    console.log("here");
-    console.log(users);
-    // Initialize an empty object to store the user ID and player data pairs
-    let players = {};
 
     // Iterate over each user
     for (const user of users) {
-      // Add the user to the players dictionary
-      data.players[user.playertag] = { userId: user.userId };
+      // Add the user to the playersTag dictionary
+      data.playersTag[user.playertag] = { userId: user.userId };
+
+      // Check if the userId already exists in playersId
+      if (!data.playersId[user.userId]) {
+        // If not, initialize an empty array for playertags
+        data.playersId[user.userId] = { playertags: [] };
+      }
+      // Add the playertag to the user's array of playertags
+      data.playersId[user.userId].playertags.push(user.playertag);
     }
 
-    // Save the players object to your JSON file
-    fs.writeFileSync(filePath, JSON.stringify(data));
+    // Save the updated data object to your JSON file
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
 
   } finally {
     // Ensures that the client will close when you finish/error

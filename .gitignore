@@ -5,3 +5,6 @@ JSON_Data/
 guildsInfo/
 archivedGuildsInfo/
 moveMongostuff.js
+averages/
+memberRoleChanges.txt
+backups/

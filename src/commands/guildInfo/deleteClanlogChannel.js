@@ -5,11 +5,11 @@ const path = require('path');
 
 module.exports = {
   data: new SlashCommandBuilder()
-  .setName("delete-clan")
-  .setDescription("Delete a clan from your server.")
+  .setName("delete-clanlogs-channel")
+  .setDescription("Delete a clanlog channel from your server.")
   .addStringOption(option =>
     option.setName("abbreviation")
-    .setDescription("What is the abbreviation you want to use for this clan?")
+    .setDescription("What is the abbreviation you want to remove with a clanlog channel?")
     .setRequired(true))
   .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels),
 
@@ -35,14 +35,9 @@ module.exports = {
       if (data.clans.hasOwnProperty(clanname)) {
         if (data.clans[clanname].abbreviation === abbrev) {
           // Delete specific fields from the clan
-          delete data.clans[clanname].clantag;
-          delete data.clans[clanname].roleId;
-          delete data.clans[clanname].abbreviation;
-          delete data.clans[clanname].warDayChannel;
           delete data.clans[clanname].clanlogsChannel;
-          delete data.clans[clanname].clanInfo;
           fs.writeFileSync(filePath, JSON.stringify(data));
-          await interaction.editReply(`The clan with abbreviation \`${abbrev}\` has been deleted from the server.`);
+          await interaction.editReply(`The clan with abbreviation \`${abbrev}\` has been removed of their clanlog channel.`);
           return;
         }
       }

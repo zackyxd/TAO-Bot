@@ -6,7 +6,7 @@ const clanLinkChannel = require('./clanLinkChannel.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
-  .setName("create-war-stats-channel")
+  .setName("create-warstats-channel")
   .setDescription("Which channel will stats before war ends be sent?")
   .addStringOption(option =>
     option.setName("abbreviation")
@@ -16,12 +16,12 @@ module.exports = {
     option.setName('channel')
     .setDescription("Which channel will it send to?")
     .setRequired(true))
-  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+  .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels),
 
   async execute(interaction){
     if (!interaction.isChatInputCommand()) return;
 
-    if (interaction.commandName === 'create-war-stats-channel'){
+    if (interaction.commandName === 'create-warstats-channel'){
       await interaction.deferReply({ ephemeral: true });
       const guild = interaction.guild;
       const abbrev = interaction.options.get("abbreviation").value.toLowerCase();
@@ -40,6 +40,7 @@ module.exports = {
       }
       catch (err){
         console.error(err);
+        return;
       }
 
       // data.linkChannel = linkChannel.id;

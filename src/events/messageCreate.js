@@ -12,6 +12,7 @@ module.exports = {
     }
     catch (err){
       console.error(err);
+      return;
     }
     let member = message.author;
 

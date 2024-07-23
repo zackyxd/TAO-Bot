@@ -58,7 +58,7 @@ module.exports = {
       const threeDaysInSeconds = 3 * 24 * 60 * 60; // Number of seconds in 3 days
       const expiryTime = currentTime + threeDaysInSeconds; // Expiry time 3 days from now
 
-      const sentMessage = await channel.send({ content: `[${clan.name}](<${clanLink}>): Expires <t:${expiryTime}:R>`}); // bot's message with countdown
+      const sentMessage = await channel.send({ content: `## [${clan.name}](<${clanLink}>): <t:${expiryTime}:R>`}); // bot's message with countdown
       const messageId = sentMessage.id; // countdown message id
 
       if (clan.name in data.clans) {

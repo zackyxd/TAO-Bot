@@ -43,6 +43,7 @@ module.exports = {
       }
       catch (err){
         console.error(err);
+        return;
       }
       let oldUserId = data.playersTag[playertag] ? data.playersTag[playertag].userId : '';
       if (data.playersTag[playertag] && oldUserId !== member.id){
@@ -84,7 +85,7 @@ module.exports = {
           await interaction.editReply({ embeds: [playerMessage.embedReturn] });
           
         } catch (error) {
-          await interaction.editReply({ embeds: [playerMessage.embedReturnNoLink] });
+          await interaction.editReply({ embeds: [playerMessage.embedReturn] });
           await interaction.followUp({ content: "Couldn't change their name, but link was still completed.", ephemeral: true })
         }
       }
@@ -99,7 +100,7 @@ module.exports = {
           data.playersId[member.user.id] = { playertags: [playertag] };
         }
         await interaction.editReply({ embeds: [playerMessage.embedReturnNoLink] });
-        interaction.followUp({ content: `This playertag was already linked to <@${oldUserId}>.`, ephemeral: true })
+        interaction.followUp({ content: `This playertag was already linked before to <@${oldUserId}>. However, added this link to their list of players.`, ephemeral: true })
       }
 
       fs.writeFileSync(filePath, JSON.stringify(data));
@@ -179,7 +180,7 @@ async function playerStats(account, interaction, member){
   let level15 = 0;
   let level14 = 0;
   let level13 = 0;
-  let level12 = 0;
+  let evolutions = 0;
 
   for (let card of account.cards){
     let checkCardLevel = checkLevel(card.level, card.rarity);
@@ -192,8 +193,8 @@ async function playerStats(account, interaction, member){
     if (checkCardLevel === 13){
       level13++;
     }
-    if (checkCardLevel === 12){
-      level12++;
+    if (card?.evolutionLevel === 1){
+      evolutions++;
     }
   }
 
@@ -269,7 +270,7 @@ async function playerStats(account, interaction, member){
     description += `Best: <:polMedal:1196602844166492261> ---\n\n`;
   }
 
-  description += `__**Card Levels**__ <:cards:1196602848411127818>\n<:experience15:1196504104256671794>: ${level15}\n<:experience14:1196504101756874764>: ${level14}\n<:experience13:1196504100200796160>: ${level13}\n<:experience12:1196504097449312336>: ${level12}`;
+  description += `__**Card Levels**__ <:cards:1196602848411127818>\n<:Evolutions:1248347132088418478>: ${evolutions}\n<:experience15:1196504104256671794>: ${level15}\n<:experience14:1196504101756874764>: ${level14}\n<:experience13:1196504100200796160>: ${level13}`;
 
   let linker = interaction.member.nickname ?? interaction.user.username;
   let linkee = member.nickname ?? member.user.username;
@@ -299,7 +300,8 @@ async function playerStats(account, interaction, member){
         { name: `__CC Wins__ <:classicWin:1196602845890355290>`, value: `${classicWins}`, inline: true },
         { name: `__GC Wins__ <:grandChallenge:1196602855482728560>`, value: `${grandWins}`, inline: true }
       )
-      .setDescription(description);
+      .setDescription(description)
+      .setFooter({ text: "Was already linked!" });
       
       //await interaction.editReply({ embeds: [embedReturn], files: [file] });
       return {embedReturn, embedReturnNoLink, name, playertag};

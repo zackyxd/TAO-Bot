@@ -11,7 +11,7 @@ const fs = require('fs')
 
 module.exports = {
   name: Events.InteractionCreate,
-  async execute (interaction) {
+  async execute(interaction) {
     if (interaction.isChatInputCommand()) {
       const command = interaction.client.commands.get(interaction.commandName)
 
@@ -38,8 +38,8 @@ module.exports = {
           })
         }
       }
-    } 
-    
+    }
+
     else if (interaction.isButton()) {
 
       if (interaction.customId.startsWith('confirm')) {
@@ -97,7 +97,7 @@ module.exports = {
               content: `This playertag is already linked to <@${oldUserId}>, would you like to switch this to <@${parts[1]}>? Click \`Change Link\` above if so.`,
               ephemeral: true
             })
-          } 
+          }
           else { // just link player
             try {
               // change name
@@ -119,7 +119,7 @@ module.exports = {
                 await interaction.followUp({ content: "Issue changing name, link should be going through still", ephemeral: true })
               }
               await interaction.message.edit({ components: [confirmRow] })
-              
+
               data.playersTag[playertag] = { userId: userId }
               //console.log(data.playersId[userId]);
               if (data.playersId[userId]) {
@@ -154,10 +154,10 @@ module.exports = {
             }
           }
         }
-      } 
-      
+      }
+
       else if (interaction.customId.startsWith('cancel')) {
-        const filePath = path.join(__dirname,'..','..','guildsInfo',`${interaction.guild.id}.json`);
+        const filePath = path.join(__dirname, '..', '..', 'guildsInfo', `${interaction.guild.id}.json`);
         let data = {}
         try {
           data = JSON.parse(fs.readFileSync(filePath))
@@ -177,8 +177,8 @@ module.exports = {
           return
         }
         interaction.message.edit({ components: [] })
-      } 
-      
+      }
+
       else if (interaction.customId.startsWith('change')) {
         await interaction.deferUpdate()
         const parts = interaction.customId.split('@_@')
@@ -248,7 +248,7 @@ module.exports = {
           if (index !== -1) {
             data.playersId[oldUserId].playertags.splice(index, 1);
           }
-          
+
           data.playersTag[playertag] = { userId: userId }
           if (data.playersId[userId]) {
             // if userId already exists, append playertag to existing array for multiple links

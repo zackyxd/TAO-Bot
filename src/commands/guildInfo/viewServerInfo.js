@@ -25,6 +25,7 @@ module.exports = {
       }
       catch (err){
         console.error(err);
+        return;
       }
 
 
@@ -69,7 +70,7 @@ module.exports = {
 
       let abbreviations = "";
       if (clans === ""){
-        abbreviations = "No clans with abbreviations for this server.\n"
+        abbreviations = "**No clans with abbreviations for this server.**\n"
       }
       else{
         abbreviations = "__**Clan Abbreviations**__\n" + clans;
@@ -77,7 +78,7 @@ module.exports = {
 
       let specificInfo = "";
       if (specificClans === ""){
-        specificInfo = "No clans with specific information for this server.\n"
+        specificInfo = "**No clans with specific information for this server.**\n\n"
       }
       else{
         specificInfo = `\n__**Clan Info**__\n${specificClans}`
@@ -127,6 +128,7 @@ module.exports = {
 
       const embed = new EmbedBuilder()
       .setTitle(interaction.guild.name + " Info")
+      .setThumbnail(process.env.BOT_IMAGE)
       .setDescription(abbreviations + specificInfo + rolePings + links + staff + players)
       .setColor('Purple');
 

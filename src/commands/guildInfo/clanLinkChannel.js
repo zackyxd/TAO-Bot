@@ -10,7 +10,7 @@ module.exports = {
     option.setName("link-channel")
     .setDescription("Pick a channel that will be used for clan links")
     .setRequired(true))
-  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+  .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels),
   
   async execute(interaction){
     if (!interaction.isChatInputCommand()) return;
@@ -33,6 +33,7 @@ module.exports = {
       }
       catch (err){
         console.error(err);
+        return;
       }
 
       data.linkChannel = linkChannel.id;

@@ -10,7 +10,7 @@ module.exports = {
     option.setName("role")
     .setDescription("Pick a role that staff have")
     .setRequired(true))
-  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+  .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels),
   
   async execute(interaction){
     if (!interaction.isChatInputCommand()) return;
@@ -30,6 +30,7 @@ module.exports = {
       }
       catch (err){
         console.error(err);
+        return;
       }
 
       data.staffRole = role.id;

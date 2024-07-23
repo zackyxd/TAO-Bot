@@ -109,6 +109,7 @@ async function getAttacks(abbrev, guildId){
   }
   catch (err){
     console.error(err);
+    return;
   }
   fs.writeFileSync(filePath, JSON.stringify(data));
 

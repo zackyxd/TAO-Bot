@@ -13,6 +13,7 @@ async function checkRace(abbrev, guildId){
   }
   catch (err){
     console.error(err);
+    return;
   }
   fs.writeFileSync(filePath, JSON.stringify(data));
   const emojiPath = path.join(__dirname, '..', '..', '..', `emojis.json`);
@@ -139,6 +140,7 @@ async function checkRace(abbrev, guildId){
       projectedPoints = raceData.clans[i].fame + Math.round((average*totalDecksLeft) / 50) * 50;
       fameToday = raceData.clans[i].fame;
     }
+
     if (isNaN(projectedPoints) || projectedPoints === undefined){
       projectedPoints = 0;
     }
@@ -149,6 +151,7 @@ async function checkRace(abbrev, guildId){
       name: raceData.clans[i].name,
       tag: raceData.clans[i].tag,
       fameToday: fameToday,
+      boatPoints: clan.fame,
       projectedPoints: projectedPoints,
       totalPossiblePoints: totalPossiblePoints, 
       //minimumPossiblePoints: minimumPossiblePoints,

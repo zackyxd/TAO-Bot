@@ -17,40 +17,41 @@ module.exports = {
         .setRequired(true)
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.MuteMembers),
-  
-    async execute(interaction){
-      await interaction.deferReply({ ephemeral: true });
-      var playertag = interaction.options.get("playertag").value.toUpperCase();
-      if (playertag.charAt(0) !== "#") {
-        playertag = "#" + playertag;
-      }
 
-      
-      const filePath = path.join(__dirname, '..', '..', '..', 'guildsInfo', `${interaction.guild.id}.json`);
-      let data = {};
-      try {
-        data = JSON.parse(fs.readFileSync(filePath));
-      }
-      catch (err){
-        console.error(err);
-      }
-      let userId;
-      if(data.playersTag[playertag]){
-        userId = data.playersTag[playertag].userId;
-        delete data.playersTag[playertag];
-        let index = data.playersId[userId].playertags.indexOf(playertag);
-        if (index !== -1){
-          data.playersId[userId].playertags.splice(index, 1);
-        }
-        await interaction.editReply(`The player with tag \`${playertag}\` has been unlinked from <@${userId}>`);
-        fs.writeFileSync(filePath, JSON.stringify(data));
-      }
-      else{
-        await interaction.editReply(`There was no player linked to \`${playertag}\``);
-      }
-
-
-      
-
+  async execute(interaction) {
+    await interaction.deferReply({ ephemeral: true });
+    var playertag = interaction.options.get("playertag").value.toUpperCase();
+    if (playertag.charAt(0) !== "#") {
+      playertag = "#" + playertag;
     }
+
+
+    const filePath = path.join(__dirname, '..', '..', '..', 'guildsInfo', `${interaction.guild.id}.json`);
+    let data = {};
+    try {
+      data = JSON.parse(fs.readFileSync(filePath));
+    }
+    catch (err) {
+      console.error(err);
+      return;
+    }
+    let userId;
+    if (data.playersTag[playertag]) {
+      userId = data.playersTag[playertag].userId;
+      delete data.playersTag[playertag];
+      let index = data.playersId[userId].playertags.indexOf(playertag);
+      if (index !== -1) {
+        data.playersId[userId].playertags.splice(index, 1);
+      }
+      await interaction.editReply(`The player with tag \`${playertag}\` has been unlinked from <@${userId}>`);
+      fs.writeFileSync(filePath, JSON.stringify(data));
+    }
+    else {
+      await interaction.editReply(`There was no player linked to \`${playertag}\``);
+    }
+
+
+
+
+  }
 }

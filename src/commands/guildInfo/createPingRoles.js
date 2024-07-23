@@ -38,7 +38,7 @@ module.exports = {
       { name: '12:30AM', value: "00:30" },
     )
   )
-  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+  .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels),
 
   async execute(interaction){
     await interaction.deferReply({ephemeral: true});
@@ -70,16 +70,20 @@ module.exports = {
 
     const filePath = path.join(__dirname, '..', '..', '..', 'guildsInfo', `${guild.id}.json`);
 
-    let data = {};
+    // Initialize data with default structure
+    let data = { pingableRoles: {}, playersId: {} };
     try {
-      data = JSON.parse(fs.readFileSync(filePath));
-    }
-    catch (err){
-      console.error(err);
+      // Attempt to read the existing JSON file
+      const fileData = fs.readFileSync(filePath);
+      data = JSON.parse(fileData);
+    } catch (err) {
+      console.error('File read error or file does not exist. Initializing with default structure.', err);
+      return;
     }
 
     // Check if the role already exists in pingableRoles
-    if (data.pingableRoles.hasOwnProperty(roleId)) {
+    if (data.pingableRoles && data.pingableRoles.hasOwnProperty(roleId)) {
+      console.log("came here");
       // Get the old description of the role
       const oldDescription = data.pingableRoles[roleId].description;
 

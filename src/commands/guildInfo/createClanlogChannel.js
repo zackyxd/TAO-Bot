@@ -16,7 +16,7 @@ module.exports = {
       option.setName('channel')
       .setDescription("Which channel will it send to?")
       .setRequired(true))
-  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+  .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels),
   
   async execute(interaction){
     if (!interaction.isChatInputCommand()) return;
@@ -40,6 +40,7 @@ module.exports = {
       }
       catch (err){
         console.error(err);
+        return;
       }
       // data.linkChannel = linkChannel.id;
       let clanName;
@@ -62,7 +63,10 @@ module.exports = {
         data.clans[clanName].clanInfo = {};
       } 
 
-      data.clans[clanName].clanInfo = {};
+      // Check if clanInfo exists, if not, initialize it
+      if (!data.clans[clanName].clanInfo){
+        data.clans[clanName].clanInfo = {};
+      }
       fs.writeFileSync(filePath, JSON.stringify(data));
       await interaction.editReply(`The channel <#${channel.id}> will now post clan logs for \`${clanName}\``);
     }

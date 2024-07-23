@@ -31,7 +31,7 @@ async function fetchData(url, filename, print) {
         if (err) {
           console.error(`Error writing ${filename}.json`, err);
         } else {
-          console.log(`Wrote to ${filename}.json`);
+          // console.log(`Wrote to ${filename}.json`);
         }
       });
     }
@@ -40,13 +40,13 @@ async function fetchData(url, filename, print) {
   } catch (error) {
     console.log(`Fetch failed: ${error}`);
     if (error.response && error.response.status) {
-        const statusCode = error.response.status;
-        if (statusCode === 404){
-          return 404;
-        }
-        else if (statusCode === 503){
-          return 503;
-        }
+      const statusCode = error.response.status;
+      if (statusCode === 404) {
+        return 404;
+      }
+      else if (statusCode === 503) {
+        return 503;
+      }
     }
     return;
   }

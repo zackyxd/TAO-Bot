@@ -7,7 +7,6 @@ module.exports = {
   name: Events.MessageCreate,
   async execute(message) {
     if (message.author.bot) return;
-
     const guild = message.guild;
     const channel = await guild.channels.cache.get(message.channelId);
     // HAS ROLES
@@ -68,7 +67,7 @@ module.exports = {
       .addComponents(cancel, confirm);
 
       currentMessage = await channel.send({ embeds: [playerMessage.embedReturn], components: [row] });
-
+      await channel.send({ content: `Hey <@${message.author.id}>, Thank you for providing your playertag! One of our coleaders will be with you as soon as possible <:pepelove:1248346307823927399>`});
     }
   }
 }
@@ -129,7 +128,7 @@ async function playerStats(account){
   let level15 = 0;
   let level14 = 0;
   let level13 = 0;
-  let level12 = 0;
+  let evolutions = 0;
 
   for (let card of account.cards){
     let checkCardLevel = checkLevel(card.level, card.rarity);
@@ -142,8 +141,8 @@ async function playerStats(account){
     if (checkCardLevel === 13){
       level13++;
     }
-    if (checkCardLevel === 12){
-      level12++;
+    if (card?.evolutionLevel === 1){
+      evolutions++;
     }
   }
 
@@ -220,7 +219,7 @@ async function playerStats(account){
     description += `Best: <:polMedal:1196602844166492261> ---\n\n`;
   }
 
-  description += `__**Card Levels**__ <:cards:1196602848411127818>\n<:experience15:1196504104256671794>: ${level15}\n<:experience14:1196504101756874764>: ${level14}\n<:experience13:1196504100200796160>: ${level13}\n<:experience12:1196504097449312336>: ${level12}`;
+  description += `__**Card Levels**__ <:cards:1196602848411127818>\n<:Evolutions:1248347132088418478>: ${evolutions}\n<:experience15:1196504104256671794>: ${level15}\n<:experience14:1196504101756874764>: ${level14}\n<:experience13:1196504100200796160>: ${level13}`;
 
   //const fileReturn = new AttachmentBuilder(`arenas/league${currentPOL}.png`);
   const playerLeagueIcon = getLink("league" + currentPOL + ".png");
@@ -238,7 +237,6 @@ async function playerStats(account){
       
       //await interaction.editReply({ embeds: [embedReturn], files: [file] });
       return {embedReturn, name, playertag};
-  
 }
 
 function getLink(key) {
